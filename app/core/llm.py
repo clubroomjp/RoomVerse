@@ -13,7 +13,7 @@ class LLMClient:
         self.model = config.llm.model
         self.character = config.character
 
-    def generate_response(self, visitor_name: str, message: str, context: list[dict] = None) -> str:
+    def generate_response(self, visitor_name: str, message: str, context: list[dict] = None, relationship_context: str = None) -> str:
         """
         Generates a response from the host character.
         """
@@ -21,8 +21,11 @@ class LLMClient:
             f"You are {self.character.name}.\n"
             f"Persona: {self.character.persona}\n"
             f"{self.character.system_prompt}\n"
-            f"You are currently talking to a visitor named {visitor_name}."
+            f"You are currently talking to a visitor named {visitor_name}.\n"
         )
+        
+        if relationship_context:
+            system_prompt += f"\n[Relationship Context]\n{relationship_context}\n"
 
         messages = [{"role": "system", "content": system_prompt}]
         

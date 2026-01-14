@@ -56,6 +56,7 @@ def log_visit(session: Session, visitor_id: str, visitor_name: str, callback_url
         session.add(relation)
     else:
         relation.last_met = datetime.datetime.utcnow()
+        relation.affinity += 1 # Increment affinity on visit
         if relation.visitor_name != visitor_name:
             relation.visitor_name = visitor_name # Update name if changed
         session.add(relation)

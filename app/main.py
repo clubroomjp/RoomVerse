@@ -120,13 +120,16 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     
     print(f"Message: {visitor_msg}")
 
-    # 3. Generate Response (Context aware of relationship?)
-    # TODO: Inject relationship info into context/prompt
+    # 3. Generate Response with Relationship Context
+    rel_context = f"Affinity Score: {relation.affinity}\n"
+    if relation.memory_summary:
+        rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
     
     response_text = llm_client.generate_response(
         visitor_name=request.visitor_name,
         message=visitor_msg, 
-        context=request.context
+        context=request.context,
+        relationship_context=rel_context
     )
     
     return VisitResponse(
@@ -151,14 +154,19 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     # Get relationship for context
     relation = get_relationship(session, request.visitor_id)
     visitor_name = relation.visitor_name if relation else "Unknown"
+    
+    rel_context = ""
+    if relation:
+         rel_context = f"Affinity Score: {relation.affinity}\n"
+         if relation.memory_summary:
+            rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
 
     # Generate Response
-    # For now, we don't reload full history from DB, trusting client context or stateless for simple chat
-    # To improve, we should fetch recent messages from ConversationLog if not provided
     response_text = llm_client.generate_response(
         visitor_name=visitor_name,
         message=request.message,
-        context=[] # TODO: Fetch recent history from DB for this session_id?
+        context=[], # TODO: Fetch recent history from DB for this session_id?
+        relationship_context=rel_context
     )
     
     # Log response
