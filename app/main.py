@@ -2,16 +2,20 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Annotated
+from sqlmodel import Session
 from app.core.llm import llm_client
 from app.core.config import config, Config, save_config
 from app.core.translator import translator
+from app.core.database import create_db_and_tables, get_session, log_visit, get_relationship, ConversationLog
 
 from contextlib import asynccontextmanager
 from app.core.tunnel import start_tunnel
+import uuid
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    create_db_and_tables()
     public_url = start_tunnel(8001)
     if public_url:
         print(f"!!! RoomVerse Node is LIVE at: {public_url} !!!")
@@ -31,6 +35,8 @@ async def verify_api_key(x_roomverse_key: Annotated[str | None, Header()] = None
         print(f"Unauthorized access attempt. Key provided: {x_roomverse_key}")
         raise HTTPException(status_code=403, detail="Invalid API Key")
 
+# --- Models ---
+
 class VisitRequest(BaseModel):
     visitor_id: str
     visitor_name: str
@@ -41,6 +47,21 @@ class VisitRequest(BaseModel):
 class VisitResponse(BaseModel):
     host_name: str
     response: str
+
+class ChatRequest(BaseModel):
+    visitor_id: str
+    session_id: str | None = None
+    message: str
+
+class ChatResponse(BaseModel):
+    session_id: str
+    response: str
+
+class CharacterCard(BaseModel):
+    name: str
+    description: str
+    instance_id: str
+    # Add other fields as needed (e.g. topics, gender, etc.)
 
 @app.get("/")
 async def root():
@@ -55,48 +76,56 @@ async def get_config():
 async def update_config(new_config: Config):
     # Update global config object
     global config
-    # We update fields manually or re-assign. Re-assigning works for pydantic models locally
     config.character = new_config.character
     config.llm = new_config.llm
     config.translation = new_config.translation
-    # Note: Security and Ngrok settings updates might require restart to take full effect
-    
-    # Save to disk
     save_config(config)
     
-    # Update LLM client as well
     llm_client.character = config.character
     llm_client.model = config.llm.model
-    # Note: Client connection details (base_url, api_key) might require re-init
     
     return {"status": "updated"}
 # ------------------
 
-@app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
-async def visit(request: VisitRequest):
+# --- Public Endpoints ---
+
+@app.get("/card", response_model=CharacterCard)
+async def get_card():
     """
-    Endpoint for incoming visitors.
+    Return the character card/profile.
+    """
+    return CharacterCard(
+        name=config.character.name,
+        description=config.character.persona, # Simple mapping for now
+        instance_id=config.instance_id
+    )
+
+@app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
+async def visit(request: VisitRequest, session: Session = Depends(get_session)):
+    """
+    Endpoint for incoming visitors. Records the visit and starts a conversation.
     """
     visitor_msg = request.message
     
+    # 1. Log Visit & Update Relationship
+    relation = log_visit(session, request.visitor_id, request.visitor_name, request.callback_url)
+    
     print(f"--- Incoming Visit ---")
     print(f"ID: {request.visitor_id}")
-    print(f"Name: {request.visitor_name}")
-    if request.callback_url:
-        print(f"Callback: {request.callback_url}")
+    print(f"Name: {request.visitor_name} (Affinity: {relation.affinity})")
     
-    # Auto-Translation Logic
+    # 2. Translate if needed
     if config.translation.enabled:
-        print(f"Translating incoming message from {request.visitor_name}...")
         visitor_msg = translator.translate(visitor_msg, target_lang=config.translation.target_lang)
-        print(f"Translated: {visitor_msg}")
-
+    
     print(f"Message: {visitor_msg}")
-    print(f"----------------------")
+
+    # 3. Generate Response (Context aware of relationship?)
+    # TODO: Inject relationship info into context/prompt
     
     response_text = llm_client.generate_response(
         visitor_name=request.visitor_name,
-        message=visitor_msg, # Send translated or original message
+        message=visitor_msg, 
         context=request.context
     )
     
@@ -105,6 +134,42 @@ async def visit(request: VisitRequest):
         response=response_text
     )
 
+@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(verify_api_key)])
+async def chat(request: ChatRequest, session: Session = Depends(get_session)):
+    """
+    Endpoint for continuing a conversation.
+    """
+    session_id = request.session_id or str(uuid.uuid4())
+    
+    # Log incoming message
+    log_in = ConversationLog(
+        session_id=session_id, visitor_id=request.visitor_id, 
+        sender="visitor", message=request.message
+    )
+    session.add(log_in)
+    
+    # Get relationship for context
+    relation = get_relationship(session, request.visitor_id)
+    visitor_name = relation.visitor_name if relation else "Unknown"
+
+    # Generate Response
+    # For now, we don't reload full history from DB, trusting client context or stateless for simple chat
+    # To improve, we should fetch recent messages from ConversationLog if not provided
+    response_text = llm_client.generate_response(
+        visitor_name=visitor_name,
+        message=request.message,
+        context=[] # TODO: Fetch recent history from DB for this session_id?
+    )
+    
+    # Log response
+    log_out = ConversationLog(
+        session_id=session_id, visitor_id=request.visitor_id,
+        sender="host", message=response_text
+    )
+    session.add(log_out)
+    session.commit()
+    
+    return ChatResponse(session_id=session_id, response=response_text)
 
 if __name__ == "__main__":
     import uvicorn
