@@ -5,8 +5,10 @@ import sys
 def test_visit():
     url = "http://localhost:8001/visit"
     payload = {
+        "visitor_id": "test-visitor-uuid-1234",
         "visitor_name": "Traveler",
         "message": "Hello! I am just passing by. What is this place?",
+        "callback_url": "https://fake-visitor.ngrok.io",
         "context": []
     }
     

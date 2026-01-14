@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from pydantic import BaseModel
 
 class CharacterConfig(BaseModel):
@@ -27,6 +28,7 @@ class DashboardConfig(BaseModel):
     language: str = "en"
 
 class Config(BaseModel):
+    instance_id: str
     character: CharacterConfig
     llm: LLMConfig
     ngrok: NgrokConfig = None
@@ -41,6 +43,16 @@ def load_config(path: str = "app/config.json") -> Config:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     
+    # Auto-generate instance_id if missing
+    if "instance_id" not in data:
+        data["instance_id"] = str(uuid.uuid4())
+        # Save immediately so the ID persists
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Warning: Failed to save auto-generated instance_id: {e}")
+
     return Config(**data)
 
 def save_config(config_obj: Config, path: str = "app/config.json"):

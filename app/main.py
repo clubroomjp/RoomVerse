@@ -32,8 +32,10 @@ async def verify_api_key(x_roomverse_key: Annotated[str | None, Header()] = None
         raise HTTPException(status_code=403, detail="Invalid API Key")
 
 class VisitRequest(BaseModel):
+    visitor_id: str
     visitor_name: str
     message: str
+    callback_url: str | None = None
     context: list[dict] = []
 
 class VisitResponse(BaseModel):
@@ -77,13 +79,20 @@ async def visit(request: VisitRequest):
     """
     visitor_msg = request.message
     
+    print(f"--- Incoming Visit ---")
+    print(f"ID: {request.visitor_id}")
+    print(f"Name: {request.visitor_name}")
+    if request.callback_url:
+        print(f"Callback: {request.callback_url}")
+    
     # Auto-Translation Logic
     if config.translation.enabled:
         print(f"Translating incoming message from {request.visitor_name}...")
         visitor_msg = translator.translate(visitor_msg, target_lang=config.translation.target_lang)
         print(f"Translated: {visitor_msg}")
 
-    print(f"Visitor: {request.visitor_name} says: {visitor_msg}")
+    print(f"Message: {visitor_msg}")
+    print(f"----------------------")
     
     response_text = llm_client.generate_response(
         visitor_name=request.visitor_name,
