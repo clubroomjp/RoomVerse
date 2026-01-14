@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomVerse Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-10 flex justify-between items-center">
+            <div>
+                <h1
+                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    RoomVerse Dashboard</h1>
+                <p class="text-slate-400" data-i18n="subtitle">Manage your AI Node</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <select id="lang-select"
+                    class="bg-slate-800 border border-slate-700 text-sm rounded px-3 py-1 outline-none focus:border-blue-500">
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                </select>
+                <div id="status-badge"
+                    class="px-4 py-2 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold border border-green-500/30">
+                    Online
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Character Settings -->
+            <section class="glass rounded-xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4 text-blue-300" data-i18n="char_settings">Character Settings</h2>
+                <form id="config-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="char_name">Character
+                            Name</label>
+                        <input type="text" id="char-name"
+                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-300"
+                            data-i18n="char_persona">Persona</label>
+                        <textarea id="char-persona" rows="3"
+                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="sys_prompt">System
+                            Prompt</label>
+                        <textarea id="char-prompt" rows="4"
+                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Technical Settings -->
+            <section class="space-y-8">
+                <div class="glass rounded-xl p-6 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 text-purple-300" data-i18n="llm_settings">LLM Settings</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="llm_model">Model
+                                Name</label>
+                            <input type="text" id="llm-model"
+                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="llm_url">Base
+                                URL</label>
+                            <input type="text" id="llm-url"
+                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-6 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 text-yellow-300" data-i18n="trans_settings">Translation</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300" data-i18n="trans_enable">Enable Auto-Translation</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="trans-enabled" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500">
+                                </div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="trans_target">Target
+                                Language</label>
+                            <select id="trans-target"
+                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none">
+                                <option value="ja">Japanese (日本語)</option>
+                                <option value="en">English (英語)</option>
+                                <option value="zh-CN">Chinese (Simplified) (中国語)</option>
+                                <option value="ko">Korean (韓国語)</option>
+                                <option value="fr">French (フランス語)</option>
+                                <option value="de">German (ドイツ語)</option>
+                                <option value="es">Spanish (スペイン語)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="save-btn"
+                    class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold shadow-lg transition-transform transform hover:scale-[1.02]"
+                    data-i18n="save_btn">
+                    Save Configuration
+                </button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const i18n = {
+            en: {
+                subtitle: "Manage your AI Node",
+                char_settings: "Character Settings",
+                char_name: "Character Name",
+                char_persona: "Persona",
+                sys_prompt: "System Prompt",
+                llm_settings: "LLM Settings",
+                llm_model: "Model Name",
+                llm_url: "Base URL",
+                trans_settings: "Translation",
+                trans_enable: "Enable Auto-Translation",
+                trans_target: "Target Language",
+                save_btn: "Save Configuration",
+                saving: "Saving...",
+                saved: "Saved!",
+                error: "Error"
+            },
+            ja: {
+                subtitle: "AIノード管理",
+                char_settings: "キャラクター設定",
+                char_name: "名前",
+                char_persona: "ペルソナ（性格）",
+                sys_prompt: "システムプロンプト",
+                llm_settings: "LLM設定",
+                llm_model: "モデル名",
+                llm_url: "ベースURL",
+                trans_settings: "翻訳設定",
+                trans_enable: "自動翻訳を有効化",
+                trans_target: "翻訳先の言語",
+                save_btn: "設定を保存",
+                saving: "保存中...",
+                saved: "保存しました！",
+                error: "エラーが発生しました"
+            }
+        };
+
+        let currentConfig = {};
+        let currentLang = 'en';
+
+        function updateTexts(lang) {
+            currentLang = lang;
+            const texts = i18n[lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (texts[key]) el.innerText = texts[key];
+            });
+        }
+
+        document.getElementById('lang-select').addEventListener('change', (e) => {
+            updateTexts(e.target.value);
+        });
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                currentConfig = await res.json();
+
+                // Set Dashboard Language from config
+                if (currentConfig.dashboard && currentConfig.dashboard.language) {
+                    const savedLang = currentConfig.dashboard.language;
+                    document.getElementById('lang-select').value = savedLang;
+                    updateTexts(savedLang);
+                    // currentLang is set by updateTexts
+                } else {
+                    // Default to EN or browser lang if not set
+                    updateTexts('en');
+                }
+
+                document.getElementById('char-name').value = currentConfig.character.name;
+                document.getElementById('char-persona').value = currentConfig.character.persona;
+                document.getElementById('char-prompt').value = currentConfig.character.system_prompt;
+
+                document.getElementById('llm-model').value = currentConfig.llm.model;
+                document.getElementById('llm-url').value = currentConfig.llm.base_url;
+
+                if (currentConfig.translation) {
+                    document.getElementById('trans-enabled').checked = currentConfig.translation.enabled;
+                    document.getElementById('trans-target').value = currentConfig.translation.target_lang || 'ja';
+                }
+            } catch (e) {
+                console.error("Failed to load config", e);
+            }
+        }
+
+        async function saveConfig() {
+            const btn = document.getElementById('save-btn');
+            const originalText = i18n[currentLang].save_btn;
+            btn.innerText = i18n[currentLang].saving;
+
+            const newConfig = { ...currentConfig };
+
+            // Save Dashboard Language
+            if (!newConfig.dashboard) newConfig.dashboard = {};
+            newConfig.dashboard.language = document.getElementById('lang-select').value;
+
+            newConfig.character.name = document.getElementById('char-name').value;
+            newConfig.character.persona = document.getElementById('char-persona').value;
+            newConfig.character.system_prompt = document.getElementById('char-prompt').value;
+
+            newConfig.llm.model = document.getElementById('llm-model').value;
+            newConfig.llm.base_url = document.getElementById('llm-url').value;
+
+            if (!newConfig.translation) newConfig.translation = {};
+            newConfig.translation.enabled = document.getElementById('trans-enabled').checked;
+            newConfig.translation.target_lang = document.getElementById('trans-target').value;
+
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                });
+
+                if (res.ok) {
+                    // Update currentConfig to match what we just saved (including new dashboard settings)
+                    currentConfig = newConfig;
+                    btn.innerText = i18n[currentLang].saved;
+                    setTimeout(() => btn.innerText = i18n[currentLang].save_btn, 2000);
+                } else {
+                    alert(i18n[currentLang].error);
+                    btn.innerText = i18n[currentLang].save_btn;
+                }
+            } catch (e) {
+                console.error("Save error", e);
+                btn.innerText = i18n[currentLang].save_btn;
+                alert(i18n[currentLang].error);
+            }
+        }
+
+        document.getElementById('save-btn').addEventListener('click', saveConfig);
+
+        // Initial load
+        (async function () {
+            await loadConfig();
+        })();
+    </script>
+</body>
+
+</html>

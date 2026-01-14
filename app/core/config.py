@@ -19,11 +19,20 @@ class SecurityConfig(BaseModel):
     ngrok_basic_auth: str = None
     api_key: str = None
 
+class TranslationConfig(BaseModel):
+    enabled: bool = False
+    target_lang: str = "ja"
+
+class DashboardConfig(BaseModel):
+    language: str = "en"
+
 class Config(BaseModel):
     character: CharacterConfig
     llm: LLMConfig
     ngrok: NgrokConfig = None
     security: SecurityConfig = None
+    translation: TranslationConfig = TranslationConfig()
+    dashboard: DashboardConfig = DashboardConfig()
 
 def load_config(path: str = "app/config.json") -> Config:
     if not os.path.exists(path):
@@ -33,6 +42,11 @@ def load_config(path: str = "app/config.json") -> Config:
         data = json.load(f)
     
     return Config(**data)
+
+def save_config(config_obj: Config, path: str = "app/config.json"):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(config_obj.model_dump(), f, indent=2, ensure_ascii=False)
+
 
 # Global config instance
 try:

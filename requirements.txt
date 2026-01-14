@@ -4,4 +4,6 @@ pydantic
 requests
 openai
 pyngrok
+deep-translator
+
 

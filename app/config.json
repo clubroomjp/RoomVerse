@@ -15,5 +15,12 @@
   "security": {
     "ngrok_basic_auth": "friend:welcome",
     "api_key": "secret-verse-key"
+  },
+  "translation": {
+    "enabled": true,
+    "target_lang": "ja"
+  },
+  "dashboard": {
+    "language": "ja"
   }
 }

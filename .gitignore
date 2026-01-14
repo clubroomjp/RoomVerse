@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# RoomVerse
+app/config.json
+# We keep config.json.sample
+
+# IDEs
+.vscode/
+.idea/
