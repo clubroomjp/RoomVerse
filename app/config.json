@@ -8,5 +8,12 @@
     "base_url": "http://localhost:11434/v1",
     "api_key": "ollama",
     "model": "gemma3:4b"
+  },
+  "ngrok": {
+    "authtoken": "38FayFYmlOVYEgQnoKHFmWTrtgD_3ZwMGxWacRdtnZqnNSYwS"
+  },
+  "security": {
+    "ngrok_basic_auth": "friend:welcome",
+    "api_key": "secret-verse-key"
   }
 }

@@ -12,9 +12,18 @@ class LLMConfig(BaseModel):
     api_key: str
     model: str
 
+class NgrokConfig(BaseModel):
+    authtoken: str = None
+
+class SecurityConfig(BaseModel):
+    ngrok_basic_auth: str = None
+    api_key: str = None
+
 class Config(BaseModel):
     character: CharacterConfig
     llm: LLMConfig
+    ngrok: NgrokConfig = None
+    security: SecurityConfig = None
 
 def load_config(path: str = "app/config.json") -> Config:
     if not os.path.exists(path):

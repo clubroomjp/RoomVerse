@@ -10,9 +10,13 @@ def test_visit():
         "context": []
     }
     
+    headers = {
+        "X-RoomVerse-Key": "secret-verse-key"
+    }
+
     print(f"Sending request to {url}...")
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         
         data = response.json()
