@@ -34,12 +34,13 @@ class RoomManager:
         
         return len(self.active_visitors) < self._max_capacity
 
-    def register_visitor(self, visitor_id: str, name: str, callback_url: str = None):
+    def register_visitor(self, visitor_id: str, name: str, callback_url: str = None, model: str = None):
         """Registers a visitor and updates their heartbeat/info."""
         self.active_visitors[visitor_id] = {
             "name": self.sanitize(name),
             "callback_url": callback_url,
-            "last_seen": time.time()
+            "last_seen": time.time(),
+            "model": model
         }
 
     def remove_visitor(self, visitor_id: str):
@@ -56,7 +57,7 @@ class RoomManager:
             return ""
         return html.escape(str(text))
 
-    def add_message(self, sender_id: str, sender_name: str, content: str, is_human: bool = False):
+    def add_message(self, sender_id: str, sender_name: str, content: str, is_human: bool = False, model: str = None):
         safe_content = self.sanitize(content)
         self.chat_history.append({
             "id": str(time.time()), # Simple ID
@@ -64,7 +65,8 @@ class RoomManager:
             "sender_id": sender_id,
             "sender_name": self.sanitize(sender_name),
             "content": safe_content,
-            "is_human": is_human
+            "is_human": is_human,
+            "model": model
         })
         # Keep history manageable
         if len(self.chat_history) > 100:
@@ -129,6 +131,7 @@ class RoomManager:
                 payload = {
                     "visitor_id": my_id,
                     "visitor_name": my_name,
+                    "model": config.llm.model,
                     "message": "Hello! I am an AI visiting from another room.",
                     "callback_url": "" # Not used yet
                 }
@@ -178,7 +181,8 @@ class RoomManager:
                     chat_payload = {
                         "visitor_id": my_id,
                         "session_id": their_session_id,
-                        "message": my_reply
+                        "message": my_reply,
+                        "model": config.llm.model
                     }
                     
                     try:

@@ -31,7 +31,8 @@ async def announce_presence_task():
                     "name": config.room.name,
                     "description": config.room.description,
                     "max_visitors": config.room.max_visitors,
-                    "character": config.character.name
+                    "character": config.character.name,
+                    "model": config.llm.model
                 }
                 client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
                 # print(f"[Heartbeat] Announced presence.") # Optional: noisy log
@@ -76,6 +77,7 @@ class VisitRequest(BaseModel):
     message: str
     callback_url: str | None = None
     context: list[dict] = []
+    model: str | None = None
 
 class VisitResponse(BaseModel):
     host_name: str
@@ -85,6 +87,7 @@ class ChatRequest(BaseModel):
     visitor_id: str
     session_id: str | None = None
     message: str
+    model: str | None = None
 
 class ChatResponse(BaseModel):
     session_id: str
@@ -145,7 +148,8 @@ async def update_config(new_config: Config):
             "name": config.room.name,
             "description": config.room.description,
             "max_visitors": config.room.max_visitors,
-            "character": config.character.name
+            "character": config.character.name,
+            "model": config.llm.model
         }
         success = client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
         print(f"[ConfigUpdate] Announced presence: {success}")
@@ -200,7 +204,7 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
         raise HTTPException(status_code=503, detail="Room is full")
         
     # Register & Sanitize
-    room_manager.register_visitor(request.visitor_id, request.visitor_name, request.callback_url)
+    room_manager.register_visitor(request.visitor_id, request.visitor_name, request.callback_url, request.model)
     
     # 2. Log Visit & Update Relationship
     relation = log_visit(session, request.visitor_id, room_manager.sanitize(request.visitor_name), request.callback_url)
@@ -216,7 +220,7 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
         display_msg = translator.translate(visitor_msg_original, target_lang=config.translation.target_lang)
     
     # Add to Dashboard (Sanitized)
-    room_manager.add_message(request.visitor_id, request.visitor_name, room_manager.sanitize(display_msg))
+    room_manager.add_message(request.visitor_id, request.visitor_name, room_manager.sanitize(display_msg), model=request.model)
 
     print(f"Message (Original): {visitor_msg_original}")
 
@@ -275,7 +279,7 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         display_msg = translator.translate(visitor_msg_original, target_lang=config.translation.target_lang)
 
     # Log incoming message to Room Manager (Sanitized)
-    room_manager.add_message(request.visitor_id, visitor_name, room_manager.sanitize(display_msg))
+    room_manager.add_message(request.visitor_id, visitor_name, room_manager.sanitize(display_msg), model=request.model)
 
     # Log to DB (Keep original content?) 
     # Usually DB logs should preserve what was actually said (English). 
