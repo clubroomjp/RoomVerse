@@ -212,6 +212,8 @@
                                         data-i18n="room_status">Room Status</span>
                                     <span id="room-status-text"
                                         class="text-xs text-green-500 font-bold uppercase">OPEN</span>
+                                    <a id="room-public-url" href="#" target="_blank"
+                                        class="block text-xs text-blue-500 dark:text-blue-400 mt-1 hover:underline truncate max-w-[200px] hidden"></a>
                                 </div>
                                 <button id="room-toggle-btn" onclick="toggleRoom()"
                                     class="px-3 py-1 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded shadow-lg transition-transform hover:scale-105">
@@ -468,21 +470,30 @@
                 if (texts[key]) el.placeholder = texts[key];
             });
             // Update dynamic elements
-            updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
+            // updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
         }
 
         // --- Config Logic ---
+        async function fetchRoomStatus() {
+            try {
+                const res = await fetch('/api/room/status');
+                const data = await res.json();
+                updateRoomStatusUI(data.is_open, data.public_url);
+            } catch (e) { console.error(e); }
+        }
+
         async function toggleRoom() {
             try {
                 const res = await fetch('/api/room/toggle', { method: 'POST' });
                 const data = await res.json();
-                updateRoomStatusUI(data.is_open);
+                updateRoomStatusUI(data.is_open, data.public_url);
             } catch (e) { console.error(e); }
         }
 
-        function updateRoomStatusUI(isOpen) {
+        function updateRoomStatusUI(isOpen, publicUrl) {
             const statusText = document.getElementById('room-status-text');
             const toggleBtn = document.getElementById('room-toggle-btn');
+            const urlEl = document.getElementById('room-public-url');
 
             // Cache state
             state.is_open_cache = isOpen;
@@ -492,13 +503,21 @@
                 statusText.className = 'text-xs text-green-500 font-bold uppercase';
 
                 toggleBtn.innerText = i18n[state.lang].close_room;
-                toggleBtn.className = 'px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+                toggleBtn.className = 'px-3 py-1 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+
+                if (publicUrl) {
+                    urlEl.textContent = publicUrl;
+                    urlEl.href = publicUrl;
+                    urlEl.classList.remove('hidden');
+                }
             } else {
                 statusText.innerText = 'CLOSED';
                 statusText.className = 'text-xs text-red-500 font-bold uppercase';
 
                 toggleBtn.innerText = i18n[state.lang].open_room;
                 toggleBtn.className = 'px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+
+                urlEl.classList.add('hidden');
             }
         }
 
@@ -748,6 +767,7 @@
             if (savedTheme === 'light') toggleTheme();
 
             await loadConfig();
+            await fetchRoomStatus();
 
             // Initial Tab
             switchTab('dashboard');

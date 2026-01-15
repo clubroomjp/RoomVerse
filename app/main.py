@@ -313,11 +313,19 @@ async def toggle_room(data: dict = None):
     # Simple security check: enforce host-only rule if needed, but for now open to dashboard
     room_manager.is_open = not room_manager.is_open
     status = "open" if room_manager.is_open else "closed"
-    return {"status": status, "is_open": room_manager.is_open}
+    return {
+        "status": status, 
+        "is_open": room_manager.is_open,
+        "public_url": GLOBAL_PUBLIC_URL
+    }
 
 @app.get("/api/room/status")
 async def get_room_status():
-    return {"is_open": room_manager.is_open, "active_visitors": room_manager.get_active_visitor_count()}
+    return {
+        "is_open": room_manager.is_open, 
+        "active_visitors": room_manager.get_active_visitor_count(),
+        "public_url": GLOBAL_PUBLIC_URL
+    }
 
 @app.post("/api/host/chat")
 async def host_chat(request: HostChatRequest, session: Session = Depends(get_session)):
