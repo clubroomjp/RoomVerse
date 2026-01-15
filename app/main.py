@@ -14,8 +14,30 @@ from app.core.room_manager import room_manager
 from app.core.discovery import get_discovery_client
 import uuid
 
+import asyncio
+
 # Global state
 GLOBAL_PUBLIC_URL = None
+
+async def announce_presence_task():
+    """Background task to periodically announce presence to Discovery Service."""
+    while True:
+        try:
+            if config.room.auto_announce and GLOBAL_PUBLIC_URL:
+                from app.core.discovery import get_discovery_client
+                client = get_discovery_client(config)
+                metadata = {
+                    "name": config.room.name,
+                    "description": config.room.description,
+                    "max_visitors": config.room.max_visitors,
+                    "character": config.character.name
+                }
+                client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
+                # print(f"[Heartbeat] Announced presence.") # Optional: noisy log
+        except Exception as e:
+            print(f"[Heartbeat] Error: {e}")
+        
+        await asyncio.sleep(60) # Announce every minute
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,6 +47,10 @@ async def lifespan(app: FastAPI):
     GLOBAL_PUBLIC_URL = start_tunnel(PORT)
     if GLOBAL_PUBLIC_URL:
         print(f"!!! RoomVerse Node is LIVE at: {GLOBAL_PUBLIC_URL} !!!")
+    
+    # Start Heartbeat
+    asyncio.create_task(announce_presence_task())
+    
     yield
     # Shutdown logic if needed
 
