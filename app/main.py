@@ -327,6 +327,34 @@ async def get_log_messages(session_id: str):
             
         return enriched
 
+@app.delete("/api/logs/sessions/{session_id}")
+async def delete_log_session(session_id: str):
+    from app.core import database
+    from sqlmodel import delete
+    import datetime
+
+    # Parse format: start_end
+    try:
+        start_ts_str, end_ts_str = session_id.split("_")
+        start_ts = datetime.datetime.fromtimestamp(float(start_ts_str))
+        end_ts = datetime.datetime.fromtimestamp(float(end_ts_str))
+        
+        # Add small buffer
+        start_ts -= datetime.timedelta(seconds=0.1)
+        end_ts += datetime.timedelta(seconds=0.1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+
+    with database.Session(database.engine) as session:
+        statement = delete(database.ConversationLog).where(
+            database.ConversationLog.timestamp >= start_ts,
+            database.ConversationLog.timestamp <= end_ts
+        )
+        session.exec(statement)
+        session.commit()
+    
+    return {"status": "deleted", "session_id": session_id}
+
 @app.delete("/api/logs")
 async def delete_all_logs():
     """Delete all logs but preserve relationships (affinity)."""

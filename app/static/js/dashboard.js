@@ -80,7 +80,8 @@ const i18n = {
         delete_logs: "Delete All Logs",
         select_session: "Select a session to view details",
         log_deleted: "All logs deleted.",
-        confirm_delete: "Are you sure you want to delete ALL logs? This cannot be undone."
+        confirm_delete: "Are you sure you want to delete ALL logs? This cannot be undone.",
+        confirm_delete_session: "Delete this entire session?"
     },
     ja: {
         subtitle: "AIノード管理",
@@ -152,7 +153,8 @@ const i18n = {
         delete_logs: "全ログ削除",
         select_session: "セッションを選択して詳細を表示",
         log_deleted: "全てのログを削除しました。",
-        confirm_delete: "本当に全てのログを削除しますか？この操作は取り消せません。"
+        confirm_delete: "本当に全てのログを削除しますか？この操作は取り消せません。",
+        confirm_delete_session: "このセッション履歴を削除しますか？"
     }
 };
 
@@ -663,20 +665,45 @@ function renderLogSessions(sessions) {
 
     sessions.forEach(sess => {
         const el = document.createElement('div');
-        el.className = 'p-3 rounded-lg hover:bg-white dark:hover:bg-slate-700 cursor-pointer transition border border-transparent hover:border-slate-200 dark:hover:border-slate-600 mb-1';
+        el.className = 'group p-3 rounded-lg hover:bg-white dark:hover:bg-slate-700 cursor-pointer transition border border-transparent hover:border-slate-200 dark:hover:border-slate-600 mb-1 relative';
         el.onclick = () => loadLogChat(sess);
 
         const date = new Date(sess.timestamp).toLocaleString();
 
         el.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
+            <div class="flex justify-between items-start mb-1 pr-6">
                 <span class="font-bold text-slate-700 dark:text-slate-200 text-sm">${sess.visitor_name}</span>
                 <span class="text-[10px] text-slate-400">${date}</span>
             </div>
-            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${sess.preview}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 truncate pr-6">${sess.preview}</div>
+            
+            <button onclick="deleteLogSession(event, '${sess.session_id}')" 
+                class="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         `;
         listEl.appendChild(el);
     });
+}
+
+async function deleteLogSession(e, sessionId) {
+    e.stopPropagation(); // Prevent loading chat
+    if (!confirm(i18n[state.lang].confirm_delete_session)) return;
+
+    try {
+        await fetch(`/api/logs/sessions/${sessionId}`, { method: 'DELETE' });
+
+        // If current viewing is this one, clear view
+        if (currentSessionId === sessionId) {
+            document.getElementById('log-chat-container').innerHTML = `<div class="flex h-full items-center justify-center text-slate-400"><span data-i18n="select_session">${i18n[state.lang].select_session}</span></div>`;
+            document.getElementById('log-chat-header').classList.add('hidden');
+            currentSessionId = null;
+        }
+        refreshLogs();
+    } catch (e) {
+        console.error(e);
+        alert("Delete failed");
+    }
 }
 
 let currentSessionId = null;
