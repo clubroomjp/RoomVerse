@@ -3,7 +3,7 @@ import json
 import sys
 
 def test_visit():
-    base_url = "http://localhost:8002"
+    base_url = "http://localhost:22022"
     
     # 1. Test Card
     print(f"--- Testing /card ---")

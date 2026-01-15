@@ -173,11 +173,12 @@ async def get_card():
     )
 
 @app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
+@app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
 async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     """
     Endpoint for incoming visitors. Records the visit and starts a conversation.
     """
-    visitor_msg = request.message
+    visitor_msg_original = request.message
     
     # 1. Capacity Check & Security
     if not room_manager.can_accept_visitor(request.visitor_id):
@@ -193,31 +194,40 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     print(f"ID: {request.visitor_id}")
     print(f"Name: {request.visitor_name} (Affinity: {relation.affinity})")
     
-    # 3. Translate if needed
+    # 3. Prepare Display Message (Translated)
+    display_msg = visitor_msg_original
     if config.translation.enabled:
-        visitor_msg = translator.translate(visitor_msg, target_lang=config.translation.target_lang)
+        # Translate for Dashboard View
+        display_msg = translator.translate(visitor_msg_original, target_lang=config.translation.target_lang)
     
-    # Sanitize message before processing
-    visitor_msg = room_manager.sanitize(visitor_msg)
-    room_manager.add_message(request.visitor_id, request.visitor_name, visitor_msg)
+    # Add to Dashboard (Sanitized)
+    room_manager.add_message(request.visitor_id, request.visitor_name, room_manager.sanitize(display_msg))
 
-    print(f"Message: {visitor_msg}")
+    print(f"Message (Original): {visitor_msg_original}")
 
-    # 3. Generate Response with Relationship Context
+    # 4. Generate Response with Relationship Context
+    # Use Original Message for LLM (English conversation)
     rel_context = f"Affinity Score: {relation.affinity}\n"
     if relation.memory_summary:
         rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
     
     response_text = llm_client.generate_response(
         visitor_name=request.visitor_name,
-        message=visitor_msg, 
+        message=visitor_msg_original, 
         context=request.context,
         relationship_context=rel_context
     )
     
+    # 5. Handle Response Translation for Dashboard
+    display_response = response_text
+    if config.translation.enabled:
+        display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+    
+    room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
+    
     return VisitResponse(
         host_name=config.character.name,
-        response=response_text
+        response=response_text # Return original English response
     )
 
 @app.post("/chat", response_model=ChatResponse, dependencies=[Depends(verify_api_key)])
@@ -227,19 +237,27 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     """
     session_id = request.session_id or str(uuid.uuid4())
     
-    # Log incoming message (Sanitized via RoomManager)
-    safe_message = room_manager.sanitize(request.message)
-    room_manager.add_message(request.visitor_id, "visitor", safe_message)
+    # Get relationship first to get the Name
+    relation = get_relationship(session, request.visitor_id)
+    visitor_name = relation.visitor_name if relation else "Unknown Visitor"
 
+    # Prepare Display Message
+    visitor_msg_original = request.message
+    display_msg = visitor_msg_original
+    
+    if config.translation.enabled:
+        display_msg = translator.translate(visitor_msg_original, target_lang=config.translation.target_lang)
+
+    # Log incoming message to Room Manager (Sanitized)
+    room_manager.add_message(request.visitor_id, visitor_name, room_manager.sanitize(display_msg))
+
+    # Log to DB (Keep original content?) 
+    # Usually DB logs should preserve what was actually said (English). 
     log_in = ConversationLog(
         session_id=session_id, visitor_id=request.visitor_id, 
-        sender="visitor", message=safe_message
+        sender="visitor", message=room_manager.sanitize(visitor_msg_original)
     )
     session.add(log_in)
-    
-    # Get relationship for context
-    relation = get_relationship(session, request.visitor_id)
-    visitor_name = relation.visitor_name if relation else "Unknown"
     
     rel_context = ""
     if relation:
@@ -247,22 +265,25 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
          if relation.memory_summary:
             rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
 
-    # Generate Response
+    # Generate Response (English Logic)
     response_text = llm_client.generate_response(
         visitor_name=visitor_name,
-        message=safe_message,
-        context=[], # TODO: Fetch recent history from DB for this session_id?
+        message=visitor_msg_original,
+        context=[], 
         relationship_context=rel_context
     )
     
-    # Sanitize response just in case
-    response_text = room_manager.sanitize(response_text)
-    room_manager.add_message(config.instance_id, config.character.name, response_text)
+    # Handle Response Translation for Dashboard
+    display_response = response_text
+    if config.translation.enabled:
+        display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+
+    room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
     
-    # Log response
+    # Log response to DB
     log_out = ConversationLog(
         session_id=session_id, visitor_id=request.visitor_id,
-        sender="host", message=response_text
+        sender="host", message=room_manager.sanitize(response_text)
     )
     session.add(log_out)
     session.commit()
