@@ -295,8 +295,12 @@
                             <div>
                                 <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
                                     data-i18n="discovery_url">Discovery API URL</label>
-                                <input type="text" id="discovery-url"
+                                <input type="text" id="discovery-url" list="discovery-url-list"
                                     class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs text-slate-800 dark:text-white">
+                                <datalist id="discovery-url-list">
+                                    <option value="https://roomverse-discovery.clubroom.workers.dev">Official Discovery
+                                        (Registered)</option>
+                                </datalist>
                             </div>
 
                             <!-- Agent Settings -->
@@ -476,7 +480,7 @@
                 room_name: "ルーム名",
                 room_desc: "紹介文",
                 max_visitors: "最大入室数",
-                auto_announce: "ディレクトリに自動公開",
+                auto_announce: "ロビーに自動公開",
                 discovery_url: "Discovery API URL",
                 active_rooms: "公開中のルーム",
                 room_status: "ルーム状態",
