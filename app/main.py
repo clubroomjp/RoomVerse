@@ -119,6 +119,15 @@ async def list_rooms():
     return rooms
 
 # --- Config API ---
+@app.get("/api/llm/detect")
+async def detect_llms():
+    """
+    Scans local ports for running LLM services (Ollama, LM Studio, etc).
+    """
+    from app.core.scanner import scanner
+    results = await scanner.scan_all()
+    return results
+
 @app.get("/api/config")
 async def get_config():
     return config

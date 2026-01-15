@@ -61,8 +61,18 @@ const i18n = {
         help_sys_prompt: "Base behavior rules.",
         help_trans_enable: "Real-time translation of incoming/outgoing messages.",
         help_max_turns: "Agent ends conversation after this many exchanges.",
+        help_trans_enable: "Real-time translation of incoming/outgoing messages.",
+        help_max_turns: "Agent ends conversation after this many exchanges.",
         help_api_key: "Set an arbitrary string and share it only with users you trust.",
-        help_discovery_url: "Basically, please use the registered URL."
+        help_discovery_url: "Basically, please use the registered URL.",
+
+        // Detection
+        detect_btn: "Scan",
+        detected_label: "Detected Models",
+        detected_placeholder: "Manual Input (Select to auto-fill)",
+        scanning: "Scanning...",
+        scan_success: "Found {n} models",
+        no_models: "No local models found"
     },
     ja: {
         subtitle: "AIノード管理",
@@ -116,8 +126,18 @@ const i18n = {
         help_sys_prompt: "根本的な動作ルール",
         help_trans_enable: "送受信メッセージをリアルタイムで翻訳します",
         help_max_turns: "この回数だけ会話を往復すると帰還します",
+        help_trans_enable: "送受信メッセージをリアルタイムで翻訳します",
+        help_max_turns: "この回数だけ会話を往復すると帰還します",
         help_api_key: "任意の文字列を設定して、共有したいユーザーにだけ伝えてください",
-        help_discovery_url: "基本的には、初期登録のURLをお使いください"
+        help_discovery_url: "基本的には、初期登録のURLをお使いください",
+
+        // Detection
+        detect_btn: "スキャン",
+        detected_label: "検出されたモデル",
+        detected_placeholder: "手動入力 (選択すると自動入力)",
+        scanning: "スキャン中...",
+        scan_success: "{n} 個のモデルが見つかりました",
+        no_models: "ローカルモデルが見つかりませんでした"
     }
 };
 
@@ -362,6 +382,61 @@ async function saveConfig() {
         }
     } catch (e) {
         btn.innerText = i18n[state.lang].error;
+    }
+}
+
+
+// --- Detection Logic ---
+async function scanLLMs() {
+    const btn = document.getElementById('scan-btn');
+    const select = document.getElementById('detected-models');
+    const icon = btn.querySelector('i');
+    const label = btn.querySelector('span'); // if visible
+
+    // UI Loading
+    icon.classList.add('fa-spin');
+    const originalTitle = btn.title;
+    btn.title = i18n[state.lang].scanning;
+
+    try {
+        const res = await fetch('/api/llm/detect');
+        const models = await res.json();
+
+        // Clear options
+        select.innerHTML = `<option value="">${i18n[state.lang].detected_placeholder}</option>`;
+
+        if (models.length === 0) {
+            alert(i18n[state.lang].no_models);
+        } else {
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = JSON.stringify({ id: m.model_id, url: m.base_url });
+                opt.textContent = m.label;
+                select.appendChild(opt);
+            });
+            // alert(i18n[state.lang].scan_success.replace('{n}', models.length));
+        }
+
+    } catch (e) {
+        console.error("Scan failed", e);
+        alert(i18n[state.lang].error);
+    } finally {
+        icon.classList.remove('fa-spin');
+        btn.title = originalTitle;
+    }
+}
+
+function applyDetectedModel() {
+    const select = document.getElementById('detected-models');
+    const val = select.value;
+    if (!val) return;
+
+    try {
+        const data = JSON.parse(val);
+        document.getElementById('llm-model').value = data.id;
+        document.getElementById('llm-url').value = data.url;
+    } catch (e) {
+        console.error(e);
     }
 }
 

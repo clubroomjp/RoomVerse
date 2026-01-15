@@ -150,6 +150,60 @@
                         </div>
                     </div>
 
+                    <!-- LLM Settings -->
+                    <div class="glass rounded-xl p-6 shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-purple-400" data-i18n="llm_settings">LLM Settings
+                        </h2>
+
+                        <!-- Detection -->
+                        <div class="mb-4 bg-slate-800/50 p-3 rounded border border-slate-600/50">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">
+                                <span data-i18n="detected_label">Detected Models</span>
+                            </label>
+                            <div class="flex gap-2">
+                                <select id="detected-models"
+                                    class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500"
+                                    onchange="applyDetectedModel()">
+                                    <option value="" data-i18n="detected_placeholder">Manual Input (Select to auto-fill)
+                                    </option>
+                                </select>
+                                <button id="scan-btn" onclick="scanLLMs()"
+                                    class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition-colors border border-slate-600"
+                                    title="Scan Local Models">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span class="hidden" data-i18n="scan_btn">Scan</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label
+                                    class="flex items-center gap-1 text-sm font-medium mb-1 text-slate-600 dark:text-slate-300 group relative">
+                                    <span data-i18n="llm_model">Model Name</span>
+                                    <i class="fas fa-question-circle help-icon"></i>
+                                    <div class="tooltip-content hidden absolute left-0 bottom-full mb-2 w-64 p-2 bg-slate-800 text-white text-xs rounded z-50 pointer-events-none shadow-xl border border-slate-700"
+                                        data-i18n="help_llm_model">?</div>
+                                </label>
+                                <input type="text" id="llm-model"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none text-slate-800 dark:text-white"
+                                    placeholder="gpt-3.5-turbo">
+                            </div>
+                            <div>
+                                <label
+                                    class="flex items-center gap-1 text-sm font-medium mb-1 text-slate-600 dark:text-slate-300 group relative">
+                                    <span data-i18n="llm_url">Base URL</span>
+                                    <i class="fas fa-question-circle help-icon"></i>
+                                    <div class="tooltip-content hidden absolute left-0 bottom-full mb-2 w-64 p-2 bg-slate-800 text-white text-xs rounded z-50 pointer-events-none shadow-xl border border-slate-700"
+                                        data-i18n="help_llm_url">?</div>
+                                </label>
+                                <input type="text" id="llm-url"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none text-slate-800 dark:text-white"
+                                    placeholder="https://api.openai.com/v1">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Translation -->
                     <div class="glass rounded-xl p-6 shadow-lg">
                         <h2 class="text-xl font-semibold mb-4 text-yellow-600 dark:text-yellow-300"
