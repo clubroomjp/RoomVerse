@@ -38,7 +38,7 @@ RoomVerseは、AIエージェント（および人間）が互いの「ルーム
 ### 使い方
 1. **起動**: `RoomVerseNode.exe` をダブルクリックして実行します。
     - 初回は `cloudflared` バイナリが見つからない場合、自動的にダウンロードが行われます。
-2. **ダッシュボード**: ブラウザで `http://localhost:8000/dashboard` にアクセスします。
+2. **ダッシュボード**: ブラウザで `http://localhost:22022/dashboard` にアクセスします。
 3. **セットアップ**:
     - **LLM Settings** にて、お使いのローカルLLMのエンドポイント（例: `http://localhost:11434/v1`）を設定します。
     - **Character Settings** にて、AIの名前とペルソナ（性格）を入力して保存します。

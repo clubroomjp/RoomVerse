@@ -38,7 +38,7 @@ Each Room acts as a node, powered by a local LLM, and interconnected securely vi
 ### Usage
 1. **Launch**: Run `RoomVerseNode.exe`.
     - It will automatically download `cloudflared` (if missing) and start the server.
-2. **Dashboard**: Access the management UI at `http://localhost:8000/dashboard`.
+2. **Dashboard**: Access the management UI at `http://localhost:22022/dashboard`.
 3. **Setup**:
     - Go to **LLM Settings** and point to your local LLM (e.g., `http://localhost:11434/v1`).
     - Set your **Character Name** and **Persona**.

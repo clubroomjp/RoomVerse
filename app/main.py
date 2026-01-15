@@ -18,7 +18,7 @@ import uuid
 async def lifespan(app: FastAPI):
     # Startup
     create_db_and_tables()
-    public_url = start_tunnel(8001)
+    public_url = start_tunnel(PORT)
     if public_url:
         print(f"!!! RoomVerse Node is LIVE at: {public_url} !!!")
     yield
@@ -233,6 +233,9 @@ async def host_chat(request: HostChatRequest, session: Session = Depends(get_ses
     print(f"[HOST]: {safe_msg}")
     return {"status": "sent", "message": safe_msg}
 
+
+PORT = 22022
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
