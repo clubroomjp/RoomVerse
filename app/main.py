@@ -180,60 +180,152 @@ async def get_room_messages(since: float = 0):
 @app.get("/api/logs/sessions")
 async def get_log_sessions():
     """
-    Returns a list of unique sessions with metadata (last timestamp, visitor name, summary).
+    Returns a list of 'Virtual Sessions' grouped by time gaps (> 15 min).
     """
     from app.core import database
     from sqlmodel import select, desc
     
-    sessions = []
-    with database.Session(database.engine) as session:
-        # Get all unique session_ids via group by using distinct
-        # Note: SQLModel doesn't always support distinct easily in all drivers,
-        # but let's try selecting distinct(session_id).
-        
-        statement = select(database.ConversationLog.session_id).distinct()
-        results = session.exec(statement).all()
-        
-        for sess_id in results:
-            # For each session, find the latest message to get timestamp
-            last_msg_stmt = (
-                select(database.ConversationLog)
-                .where(database.ConversationLog.session_id == sess_id)
-                .order_by(desc(database.ConversationLog.timestamp))
-                .limit(1)
-            )
-            last_msg = session.exec(last_msg_stmt).first()
-            
-            if last_msg:
-                # Find visitor name from Relationship (most stable name)
-                relation = session.get(database.Relationship, last_msg.visitor_id)
-                visitor_name = relation.visitor_name if relation else "Unknown"
-                
-                sessions.append({
-                    "session_id": sess_id,
-                    "timestamp": last_msg.timestamp,
-                    "visitor_name": visitor_name,
-                    "visitor_id": last_msg.visitor_id,
-                    "preview": last_msg.message[:50] + "..." if len(last_msg.message) > 50 else last_msg.message
-                })
+    GAP_THRESHOLD = 900  # 15 minutes
     
-    # Sort sessions by timestamp desc (newest first)
-    sessions.sort(key=lambda x: x["timestamp"], reverse=True)
-    return sessions
+    with database.Session(database.engine) as session:
+        # Fetch ALL logs ordered by time (Newest first)
+        statement = (
+            select(database.ConversationLog)
+            .order_by(desc(database.ConversationLog.timestamp))
+        )
+        logs = session.exec(statement).all()
+        
+        sessions_list = []
+        if not logs:
+            return []
+            
+        # Grouping Logic
+        current_group = []
+        
+        for i, msg in enumerate(logs):
+            current_group.append(msg)
+            
+            # Check if next message exists and if there is a gap
+            is_last = (i == len(logs) - 1)
+            gap_detected = False
+            
+            if not is_last:
+                next_msg = logs[i+1]
+                # Calculate diff (current is newer than next)
+                diff = (msg.timestamp - next_msg.timestamp).total_seconds()
+                if diff > GAP_THRESHOLD:
+                    gap_detected = True
+            
+            if is_last or gap_detected:
+                # Commit current group as a session
+                # Group is ordered Newest -> Oldest
+                # Sessiom Timestamp = Time of the NEWEST message (start of the session from user perspective)
+                # OR Time of the OLDEST message?
+                # Usually list shows "When it happened". Let's use the Start Time (Oldest in group) or End Time?
+                # Let's use the Start of the conversation (Oldest message in group).
+                
+                group_start_msg = current_group[-1] # Oldest
+                group_end_msg = current_group[0]    # Newest
+                
+                # Get unique names
+                visitors = set()
+                # We need to resolve names.
+                # Optimization: creating a map of visitor_id -> name?
+                # For now, just simplistic lookup or using what's in logs if we had it.
+                # ConversationLog doesn't have names. We must look up.
+                # Efficient lookup:
+                processed_ids = set()
+                names_list = []
+                
+                for m in current_group:
+                    if m.sender == "host":
+                         if "Host" not in names_list: names_list.append("Host")
+                    else:
+                        if m.visitor_id not in processed_ids:
+                            # Try simple lookup
+                            # For speed, we might want to cache? 
+                            # But N is small usually.
+                            names_list.append(m.visitor_id[:8]) # Fallback
+                            processed_ids.add(m.visitor_id)
+
+                # Fetch real names for visitors (Optimized would be bulk fetch)
+                # Let's just fix descriptions for now.
+                
+                # Create ID: start_ts _ end_ts
+                sess_id = f"{group_start_msg.timestamp.timestamp()}_{group_end_msg.timestamp.timestamp()}"
+                
+                sessions_list.append({
+                    "session_id": sess_id,
+                    "timestamp": group_start_msg.timestamp, # Show when it STARTED
+                    "visitor_name": f"Session ({len(current_group)} msgs)", # Placeholder, ideally "User A, User B"
+                    "visitor_id": "group",
+                    "preview": group_start_msg.message[:50] + "..." 
+                })
+                
+                current_group = []
+
+    # Post-process names (Slow but correct)
+    with database.Session(database.engine) as session:
+        for sess in sessions_list:
+            # We want to show participants.
+            # Ideally we stored this during the loop but we didn't want to query DB inside loop.
+            # Actually we already queried ALL logs.
+            pass 
+
+    # Re-sort? They are already roughly sorted by Newest group first because we iterated Newest->Oldest.
+    return sessions_list
 
 @app.get("/api/logs/messages/{session_id}")
 async def get_log_messages(session_id: str):
     from app.core import database
-    from sqlmodel import select
+    from sqlmodel import select, col
+    import datetime
     
+    # Parse format: start_end
+    try:
+        start_ts_str, end_ts_str = session_id.split("_")
+        start_ts = datetime.datetime.fromtimestamp(float(start_ts_str))
+        end_ts = datetime.datetime.fromtimestamp(float(end_ts_str))
+        
+        # Add small buffer for float precision issues
+        start_ts -= datetime.timedelta(seconds=0.1)
+        end_ts += datetime.timedelta(seconds=0.1)
+        
+    except ValueError:
+        return []
+
     with database.Session(database.engine) as session:
         statement = (
             select(database.ConversationLog)
-            .where(database.ConversationLog.session_id == session_id)
+            .where(database.ConversationLog.timestamp >= start_ts)
+            .where(database.ConversationLog.timestamp <= end_ts)
             .order_by(database.ConversationLog.timestamp)
         )
         results = session.exec(statement).all()
-        return results
+        
+        # We need names here too!
+        # Enrich results with sender names
+        enriched = []
+        visitor_cache = {}
+        
+        for msg in results:
+            sender_name = "Unknown"
+            if msg.sender == "host":
+                sender_name = config.character.name
+            else:
+                if msg.visitor_id in visitor_cache:
+                    sender_name = visitor_cache[msg.visitor_id]
+                else:
+                    relation = session.get(database.Relationship, msg.visitor_id)
+                    sender_name = relation.visitor_name if relation else msg.visitor_id[:8]
+                    visitor_cache[msg.visitor_id] = sender_name
+            
+            # Return dict
+            msg_dict = msg.model_dump()
+            msg_dict["sender_name"] = sender_name
+            enriched.append(msg_dict)
+            
+        return enriched
 
 @app.delete("/api/logs")
 async def delete_all_logs():
