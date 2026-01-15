@@ -227,6 +227,7 @@
                                     <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
                                         data-i18n="api_key_label">API Key (Optional)</label>
                                     <input type="password" id="api-key" placeholder="Wait for authorization..."
+                                        data-i18n-placeholder="api_key_placeholder"
                                         class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-slate-800 dark:text-white font-mono text-sm">
                                 </div>
                             </div>
@@ -273,10 +274,10 @@
             <section id="section-room" class="tab-content hidden">
                 <div class="glass rounded-xl shadow-2xl h-[80vh] flex flex-col max-w-5xl mx-auto overflow-hidden">
                     <!-- Room Header -->
-                    <div class="p-4 border-b border-slate-700/50 bg-slate-800/30 flex justify-between items-center">
+                    <div class="p-4 border-b border-slate-700/50 bg-slate-800/50 flex justify-between items-center">
                         <div>
                             <h3 class="text-lg font-bold text-white"><span id="room-display-name">My Room</span></h3>
-                            <p class="text-xs text-slate-400">Visitors: <span id="visitor-count">0</span></p>
+                            <p class="text-xs text-slate-200">Visitors: <span id="visitor-count">0</span></p>
                         </div>
                         <div class="flex gap-2">
                             <span
@@ -295,17 +296,16 @@
                         </div>
                     </div>
 
-                    <!-- Input Area -->
-                    <div class="p-4 bg-slate-200 dark:bg-slate-800 border-t border-slate-300 dark:border-slate-700">
-                        <form id="host-chat-form" class="flex gap-2">
-                            <input type="text" id="host-input"
-                                class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"
-                                placeholder="Speak as Host..." autocomplete="off">
-                            <button type="submit"
-                                class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">
-                                Send
-                            </button>
-                        </form>
+                    <!-- Host Input -->
+                    <div
+                        class="p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+                        <input type="text" id="host-input" placeholder="Speak as Host..."
+                            data-i18n-placeholder="host_input_placeholder"
+                            class="flex-1 bg-slate-100 dark:bg-slate-700 border-0 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none dark:text-white transition-colors"
+                            onkeydown="if(event.key==='Enter') sendHostMessage()">
+                        <button onclick="sendHostMessage()"
+                            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-bold shadow-lg transition-transform active:scale-95"
+                            data-i18n="send_btn">Send</button>
                     </div>
                 </div>
             </section>
@@ -350,6 +350,7 @@
                 open_room: "OPEN ROOM",
                 security_header: "Security",
                 api_key_label: "API Key (Optional)",
+                api_key_placeholder: "Wait for authorization...",
                 tab_dashboard: "Dashboard",
                 tab_lobby: "Lobby",
                 tab_room: "My Room",
@@ -359,7 +360,9 @@
                 saved: "Saved!",
                 error: "Error",
                 refresh: "Refresh",
-                connect: "Connect"
+                connect_btn: "Connect",
+                host_input_placeholder: "Speak as Host...",
+                send_btn: "Send"
             },
             ja: {
                 subtitle: "AIノード管理",
@@ -385,16 +388,19 @@
                 open_room: "ルームを開ける",
                 security_header: "セキュリティ",
                 api_key_label: "APIキー (任意)",
+                api_key_placeholder: "認証待ち...",
                 tab_dashboard: "ダッシュボード",
                 tab_lobby: "ロビー",
                 tab_room: "マイルーム",
-                capacity: "定員",
+                capacity: "人数",
                 save_btn: "設定を保存",
                 saving: "保存中...",
                 saved: "保存しました！",
                 error: "エラーが発生しました",
                 refresh: "更新",
-                connect: "接続"
+                connect_btn: "接続",
+                host_input_placeholder: "ホストとして発言...",
+                send_btn: "送信"
             }
         };
 
@@ -457,6 +463,12 @@
                 const key = el.getAttribute('data-i18n');
                 if (texts[key]) el.innerText = texts[key];
             });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (texts[key]) el.placeholder = texts[key];
+            });
+            // Update dynamic elements
+            updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
         }
 
         // --- Config Logic ---
@@ -573,11 +585,11 @@
                                 </div>
                                 <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
                                 <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>
-                            </div>
-                            <a href="${room.url}/dashboard" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-bold shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 self-center">
-                                ${i18n[state.lang].connect}
-                            </a>
-                        </div>
+                            <div class="mt-4 flex justify-end">
+                        <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap">
+                            ${i18n[state.lang].connect_btn}
+                        </a>
+                    </div>
                     </div>
                 `).join('');
             } catch (e) {
@@ -591,7 +603,7 @@
             const container = document.getElementById('chat-container');
             const isMe = msg.sender_id === state.config.instance_id || msg.sender_id === 'HOST'; // Assuming host is me
             // Or strictly, if it is MY character responding.
-            // Actually, we distinguish "Visitor" vs "Host (Me/My AI)".
+            // Actually, we distinguish "Visitor" vs "Host" (Me/My AI).
             // msg.sender_id checks...
             // Let's rely on sender name or simple logic for now. 
             // Better: 'visitor' role vs 'host' role?
@@ -664,8 +676,7 @@
             }
         }
 
-        async function sendHostMessage(e) {
-            e.preventDefault();
+        async function sendHostMessage() {
             const input = document.getElementById('host-input');
             const text = input.value.trim();
             if (!text) return;
@@ -699,7 +710,7 @@
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
         document.getElementById('save-btn').addEventListener('click', saveConfig);
         document.getElementById('refresh-rooms').addEventListener('click', fetchRooms);
-        document.getElementById('host-chat-form').addEventListener('submit', sendHostMessage);
+        // document.getElementById('host-chat-form').addEventListener('submit', sendHostMessage);
 
         (async function init() {
             // Restore theme
