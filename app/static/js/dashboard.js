@@ -81,7 +81,14 @@ const i18n = {
         select_session: "Select a session to view details",
         log_deleted: "All logs deleted.",
         confirm_delete: "Are you sure you want to delete ALL logs? This cannot be undone.",
-        confirm_delete_session: "Delete this entire session?"
+        confirm_delete: "Are you sure you want to delete ALL logs? This cannot be undone.",
+        confirm_delete_session: "Delete this entire session?",
+
+        // Password Modal
+        enter_password: "Enter Room Password",
+        password_desc: "This room is secured. Please enter the API Key.",
+        cancel: "Cancel",
+        submit: "Submit"
     },
     ja: {
         subtitle: "AIノード管理",
@@ -154,7 +161,13 @@ const i18n = {
         select_session: "セッションを選択して詳細を表示",
         log_deleted: "全てのログを削除しました。",
         confirm_delete: "本当に全てのログを削除しますか？この操作は取り消せません。",
-        confirm_delete_session: "このセッション履歴を削除しますか？"
+        confirm_delete_session: "このセッション履歴を削除しますか？",
+
+        // Password Modal
+        enter_password: "ルームパスワード入力",
+        password_desc: "このルームは保護されています。APIキーを入力してください。",
+        cancel: "キャンセル",
+        submit: "送信"
     }
 };
 
