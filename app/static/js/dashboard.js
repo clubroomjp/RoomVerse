@@ -72,7 +72,15 @@ const i18n = {
         detected_placeholder: "Manual Input (Select to auto-fill)",
         scanning: "Scanning...",
         scan_success: "Found {n} models",
-        no_models: "No local models found"
+        no_models: "No local models found",
+
+        // Logs
+        tab_logs: "Logs",
+        logs_title: "Conversation Logs",
+        delete_logs: "Delete All Logs",
+        select_session: "Select a session to view details",
+        log_deleted: "All logs deleted.",
+        confirm_delete: "Are you sure you want to delete ALL logs? This cannot be undone."
     },
     ja: {
         subtitle: "AIノード管理",
@@ -136,7 +144,15 @@ const i18n = {
         detected_placeholder: "手動入力 (選択すると自動入力)",
         scanning: "スキャン中...",
         scan_success: "{n} 個のモデルが見つかりました",
-        no_models: "ローカルモデルが見つかりませんでした"
+        no_models: "ローカルモデルが見つかりませんでした",
+
+        // Logs
+        tab_logs: "ログ",
+        logs_title: "会話ログ",
+        delete_logs: "全ログ削除",
+        select_session: "セッションを選択して詳細を表示",
+        log_deleted: "全てのログを削除しました。",
+        confirm_delete: "本当に全てのログを削除しますか？この操作は取り消せません。"
     }
 };
 
@@ -150,7 +166,7 @@ function switchTab(tabId) {
     const activeClass = state.theme === 'dark' ? 'bg-slate-700' : 'bg-white shadow';
     const inactiveClass = 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300';
 
-    ['dashboard', 'lobby', 'room'].forEach(t => {
+    ['dashboard', 'lobby', 'room', 'logs'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if (t === tabId) {
             btn.className = `px-4 py-2 rounded-md text-sm font-bold transition-transform transform scale-105 shadow ${state.theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-white text-slate-800'}`;
@@ -162,6 +178,11 @@ function switchTab(tabId) {
     // Logic
     if (tabId === 'lobby') {
         fetchRooms();
+    }
+
+    // Logs Load
+    if (tabId === 'logs') {
+        refreshLogs();
     }
     if (tabId === 'room') {
         startChatPolling();
@@ -612,6 +633,116 @@ async function sendAgent(url) {
     } catch (e) {
         console.error(e);
         alert(texts.agent_fail);
+    }
+}
+
+
+// --- Logs Logic ---
+async function refreshLogs() {
+    const listEl = document.getElementById('log-session-list');
+    listEl.innerHTML = '<div class="text-center text-slate-400 text-sm mt-10"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    try {
+        const res = await fetch('/api/logs/sessions');
+        const sessions = await res.json();
+        renderLogSessions(sessions);
+    } catch (e) {
+        console.error(e);
+        listEl.innerHTML = `<div class="text-center text-red-400 text-sm mt-10">Failed to load logs</div>`;
+    }
+}
+
+function renderLogSessions(sessions) {
+    const listEl = document.getElementById('log-session-list');
+    listEl.innerHTML = '';
+
+    if (sessions.length === 0) {
+        listEl.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10">No history</div>`;
+        return;
+    }
+
+    sessions.forEach(sess => {
+        const el = document.createElement('div');
+        el.className = 'p-3 rounded-lg hover:bg-white dark:hover:bg-slate-700 cursor-pointer transition border border-transparent hover:border-slate-200 dark:hover:border-slate-600 mb-1';
+        el.onclick = () => loadLogChat(sess);
+
+        const date = new Date(sess.timestamp).toLocaleString();
+
+        el.innerHTML = `
+            <div class="flex justify-between items-start mb-1">
+                <span class="font-bold text-slate-700 dark:text-slate-200 text-sm">${sess.visitor_name}</span>
+                <span class="text-[10px] text-slate-400">${date}</span>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${sess.preview}</div>
+        `;
+        listEl.appendChild(el);
+    });
+}
+
+let currentSessionId = null;
+
+async function loadLogChat(sessionData) {
+    currentSessionId = sessionData.session_id;
+
+    // UI Update (Header)
+    document.getElementById('log-chat-header').classList.remove('hidden');
+    document.getElementById('log-visitor-name').textContent = sessionData.visitor_name;
+    document.getElementById('log-timestamp').textContent = new Date(sessionData.timestamp).toLocaleString();
+
+    const container = document.getElementById('log-chat-container');
+    container.innerHTML = '<div class="flex h-full items-center justify-center text-slate-400"><i class="fas fa-spinner fa-spin"></i></div>';
+
+    try {
+        const res = await fetch(`/api/logs/messages/${sessionData.session_id}`);
+        const messages = await res.json();
+        renderLogMessages(messages);
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="text-center text-red-400 text-sm mt-10">Failed to load messages</div>`;
+    }
+}
+
+function renderLogMessages(messages) {
+    const container = document.getElementById('log-chat-container');
+    container.innerHTML = '';
+
+    // Sort by timestamp just in case
+    // messages.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    messages.forEach(msg => {
+        const isHost = msg.sender === 'host';
+        const alignClass = isHost ? 'justify-end' : 'justify-start';
+        const bubbleClass = isHost
+            ? 'bg-blue-600 text-white rounded-br-none'
+            : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-bl-none';
+
+        const div = document.createElement('div');
+        div.className = `flex ${alignClass}`;
+        div.innerHTML = `
+            <div class="max-w-[80%] ${bubbleClass} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
+                ${msg.message}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+async function clearAllLogs() {
+    if (!confirm(i18n[state.lang].confirm_delete)) return;
+
+    try {
+        await fetch('/api/logs', { method: 'DELETE' });
+        alert(i18n[state.lang].log_deleted);
+        refreshLogs();
+        // Clear chat view
+        document.getElementById('log-chat-container').innerHTML = `<div class="flex h-full items-center justify-center text-slate-400"><span data-i18n="select_session">${i18n[state.lang].select_session}</span></div>`;
+        document.getElementById('log-chat-header').classList.add('hidden');
+    } catch (e) {
+        console.error(e);
+        alert("Error deleting logs");
     }
 }
 

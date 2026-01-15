@@ -175,6 +175,78 @@ async def get_room_messages(since: float = 0):
 
 # ------------------
 
+# ------------------
+# --- Log API ---
+@app.get("/api/logs/sessions")
+async def get_log_sessions():
+    """
+    Returns a list of unique sessions with metadata (last timestamp, visitor name, summary).
+    """
+    from app.core import database
+    from sqlmodel import select, desc
+    
+    sessions = []
+    with database.Session(database.engine) as session:
+        # Get all unique session_ids via group by using distinct
+        # Note: SQLModel doesn't always support distinct easily in all drivers,
+        # but let's try selecting distinct(session_id).
+        
+        statement = select(database.ConversationLog.session_id).distinct()
+        results = session.exec(statement).all()
+        
+        for sess_id in results:
+            # For each session, find the latest message to get timestamp
+            last_msg_stmt = (
+                select(database.ConversationLog)
+                .where(database.ConversationLog.session_id == sess_id)
+                .order_by(desc(database.ConversationLog.timestamp))
+                .limit(1)
+            )
+            last_msg = session.exec(last_msg_stmt).first()
+            
+            if last_msg:
+                # Find visitor name from Relationship (most stable name)
+                relation = session.get(database.Relationship, last_msg.visitor_id)
+                visitor_name = relation.visitor_name if relation else "Unknown"
+                
+                sessions.append({
+                    "session_id": sess_id,
+                    "timestamp": last_msg.timestamp,
+                    "visitor_name": visitor_name,
+                    "visitor_id": last_msg.visitor_id,
+                    "preview": last_msg.message[:50] + "..." if len(last_msg.message) > 50 else last_msg.message
+                })
+    
+    # Sort sessions by timestamp desc (newest first)
+    sessions.sort(key=lambda x: x["timestamp"], reverse=True)
+    return sessions
+
+@app.get("/api/logs/messages/{session_id}")
+async def get_log_messages(session_id: str):
+    from app.core import database
+    from sqlmodel import select
+    
+    with database.Session(database.engine) as session:
+        statement = (
+            select(database.ConversationLog)
+            .where(database.ConversationLog.session_id == session_id)
+            .order_by(database.ConversationLog.timestamp)
+        )
+        results = session.exec(statement).all()
+        return results
+
+@app.delete("/api/logs")
+async def delete_all_logs():
+    """Delete all logs but preserve relationships (affinity)."""
+    from app.core import database
+    from sqlmodel import delete
+    
+    with database.Session(database.engine) as session:
+        session.exec(delete(database.ConversationLog))
+        session.exec(delete(database.VisitLog))
+        session.commit()
+    return {"status": "deleted"}
+
 # --- Public Endpoints ---
 
 @app.get("/card", response_model=CharacterCard)
