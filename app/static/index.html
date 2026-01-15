@@ -680,11 +680,14 @@
                                 </div>
                                 <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
                                 <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>
-                            <div class="mt-4 flex justify-end">
-                        <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap">
-                            ${i18n[state.lang].connect_btn}
-                        </a>
-                    </div>
+                            <div class="mt-4 flex justify-end gap-2">
+                                <button onclick="sendAgent('${room.url}')" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                    <i class="fas fa-robot mr-1"></i> Send Agent
+                                </button>
+                                <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                    ${i18n[state.lang].connect_btn}
+                                </a>
+                            </div>
                     </div>
                 `).join('');
             } catch (e) {
@@ -797,6 +800,28 @@
                 pollMessages();
             } catch (e) {
                 console.error("Send error", e);
+            }
+        }
+
+        async function sendAgent(url) {
+            if (!confirm(`Send your agent to visit ${url}?`)) return;
+
+            try {
+                const res = await fetch('/api/room/connect_agent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (res.ok) {
+                    alert("Agent Dispatched! Check your chat log for updates.");
+                    switchTab('chat');
+                } else {
+                    alert("Failed to dispatch agent.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error sending agent.");
             }
         }
 

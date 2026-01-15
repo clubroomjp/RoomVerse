@@ -342,6 +342,19 @@ async def toggle_room(data: dict = None):
         "public_url": GLOBAL_PUBLIC_URL
     }
 
+@app.post("/api/room/connect_agent")
+async def connect_agent(data: dict):
+    """
+    Triggers the Host Agent to visit a target URL.
+    Expects {"url": "..."}
+    """
+    target_url = data.get("url")
+    if not target_url:
+        raise HTTPException(status_code=400, detail="Missing URL")
+    
+    await room_manager.start_agent_visit(target_url)
+    return {"status": "Agent dispatched", "target": target_url}
+
 @app.get("/api/room/status")
 async def get_room_status():
     return {

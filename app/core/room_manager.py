@@ -2,8 +2,9 @@ from typing import Dict, List, Optional
 import html
 from app.core.config import config
 import time
-
 import asyncio
+import httpx
+from app.core.llm import llm_client
 
 class RoomManager:
     def __init__(self):
@@ -16,6 +17,9 @@ class RoomManager:
         # New Feature: Room Status & Locking
         self.is_open = True
         self.processing_lock = asyncio.Lock()
+        
+        # Track outgoing agents: target_url -> task
+        self.active_agents: Dict[str, asyncio.Task] = {}
 
     def can_accept_visitor(self, visitor_id: str) -> bool:
         if not self.is_open:
@@ -102,6 +106,97 @@ class RoomManager:
             context_str += f"- {m['sender_name']}: {m['content']}\n"
             
         return context_str
+
+    async def start_agent_visit(self, target_url: str):
+        """Starts a background task to visit another room."""
+        if target_url in self.active_agents:
+            return # Already visiting
+            
+        task = asyncio.create_task(self._agent_loop(target_url))
+        self.active_agents[target_url] = task
+        # Remove when done
+        task.add_done_callback(lambda t: self.active_agents.pop(target_url, None))
+        
+    async def _agent_loop(self, target_url: str):
+        try:
+            my_id = config.instance_id
+            my_name = config.character.name
+            
+            self.add_message("SYSTEM", "System", f"🚀 Agent departing for: {target_url}")
+
+            async with httpx.AsyncClient() as client:
+                # 1. Knock (Visit)
+                payload = {
+                    "visitor_id": my_id,
+                    "visitor_name": my_name,
+                    "message": "Hello! I am an AI visiting from another room.",
+                    "callback_url": "" # Not used yet
+                }
+                
+                try:
+                    resp = await client.post(f"{target_url.rstrip('/')}/visit", json=payload, timeout=10.0)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    
+                    # Session ID from their room
+                    their_session_id = data.get("session_id")
+                    their_reply = data.get("response", "")
+                    their_host_name = data.get("host_name", "Host")
+                    
+                    # Log Their Reply (Monitor)
+                    self.add_message("REMOTE", f"{their_host_name} (Remote)", f"「{their_reply}」")
+
+                except Exception as e:
+                    self.add_message("SYSTEM", "System", f"❌ Failed to connect: {e}")
+                    return
+
+                # Conversation Loop (Max 10 turns)
+                
+                for i in range(10):
+                    await asyncio.sleep(2) # Natural pause
+                    
+                    # 2. My Turn (Generate Response)
+                    # We reuse log_visit logic conceptually or just generate
+                    my_reply = llm_client.generate_response(
+                        visitor_name=their_host_name,
+                        message=their_reply,
+                        context=[], 
+                        relationship_context=f"You are visiting {target_url}. Be polite and curious."
+                    )
+                    
+                    # Log My Reply (Monitor)
+                    self.add_message("AGENT", f"{my_name} (Agent)", f"「{my_reply}」")
+                    
+                    # Stop Check
+                    if "bye" in my_reply.lower() or "goodbye" in my_reply.lower():
+                         self.add_message("SYSTEM", "System", "👋 Agent finished conversation.")
+                         break
+
+                    # 3. Send to Them
+                    chat_payload = {
+                        "visitor_id": my_id,
+                        "session_id": their_session_id,
+                        "message": my_reply
+                    }
+                    
+                    try:
+                        c_resp = await client.post(f"{target_url.rstrip('/')}/chat", json=chat_payload, timeout=30.0)
+                        c_resp.raise_for_status()
+                        c_data = c_resp.json()
+                        
+                        their_reply = c_data.get("response", "")
+                        self.add_message("REMOTE", f"{their_host_name} (Remote)", f"「{their_reply}」")
+                        
+                        if "bye" in their_reply.lower():
+                            self.add_message("SYSTEM", "System", "👋 Host ended conversation.")
+                            break
+                            
+                    except Exception as e:
+                        self.add_message("SYSTEM", "System", f"⚠️ Connection lost: {e}")
+                        break
+        
+        except Exception as e:
+             self.add_message("SYSTEM", "System", f"❌ System Error during visit: {e}")
 
 # Global instance
 room_manager = RoomManager()
