@@ -59,15 +59,15 @@
 
             <nav class="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1">
                 <button onclick="switchTab('dashboard')" id="tab-dashboard"
-                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="tab_dashboard">
                     Dashboard
                 </button>
                 <button onclick="switchTab('lobby')" id="tab-lobby"
-                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="tab_lobby">
                     Lobby
                 </button>
                 <button onclick="switchTab('room')" id="tab-room"
-                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="tab_room">
                     My Room
                 </button>
             </nav>
@@ -81,7 +81,7 @@
 
                 <!-- Lang Select -->
                 <select id="lang-select"
-                    class="bg-slate-200 dark:bg-slate-800 border-none rounded px-3 py-1 text-sm outline-none">
+                    class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-none rounded px-3 py-1 text-sm outline-none cursor-pointer">
                     <option value="en">English</option>
                     <option value="ja">日本語</option>
                 </select>
@@ -316,6 +316,10 @@
                 auto_announce: "Auto-Publish to Discovery",
                 discovery_url: "Discovery API URL",
                 active_rooms: "Active Rooms",
+                tab_dashboard: "Dashboard",
+                tab_lobby: "Lobby",
+                tab_room: "My Room",
+                capacity: "Capacity",
                 save_btn: "Save Configuration",
                 saving: "Saving...",
                 saved: "Saved!",
@@ -342,6 +346,10 @@
                 auto_announce: "ディレクトリに自動公開",
                 discovery_url: "Discovery API URL",
                 active_rooms: "公開中のルーム",
+                tab_dashboard: "ダッシュボード",
+                tab_lobby: "ロビー",
+                tab_room: "マイルーム",
+                capacity: "定員",
                 save_btn: "設定を保存",
                 saving: "保存中...",
                 saved: "保存しました！",
@@ -513,7 +521,7 @@
                             <div>
                                 <h3 class="font-bold text-lg text-blue-400 mb-1">${room.name || "Unknown Room"}</h3>
                                 <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">Capacity: ${room.metadata?.max_visitors || "?"}</span>
+                                    <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${i18n[state.lang].capacity}: ${room.metadata?.max_visitors || "?"}</span>
                                     <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${room.metadata?.character || "Standard AI"}</span>
                                 </div>
                                 <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
