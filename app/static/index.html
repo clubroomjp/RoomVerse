@@ -219,6 +219,18 @@
                                 </button>
                             </div>
 
+                            <!-- Security -->
+                            <div>
+                                <h3 class="text-md font-bold text-slate-700 dark:text-slate-200 mt-6 mb-2"
+                                    data-i18n="security_header">Security</h3>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                        data-i18n="api_key_label">API Key (Optional)</label>
+                                    <input type="password" id="api-key" placeholder="Wait for authorization..."
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-slate-800 dark:text-white font-mono text-sm">
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
                                     data-i18n="discovery_url">Discovery API URL</label>
@@ -336,6 +348,8 @@
                 room_status: "Room Status",
                 close_room: "CLOSE ROOM",
                 open_room: "OPEN ROOM",
+                security_header: "Security",
+                api_key_label: "API Key (Optional)",
                 tab_dashboard: "Dashboard",
                 tab_lobby: "Lobby",
                 tab_room: "My Room",
@@ -369,6 +383,8 @@
                 room_status: "ルーム状態",
                 close_room: "ルームを閉じる",
                 open_room: "ルームを開ける",
+                security_header: "セキュリティ",
+                api_key_label: "APIキー (任意)",
                 tab_dashboard: "ダッシュボード",
                 tab_lobby: "ロビー",
                 tab_room: "マイルーム",
@@ -477,6 +493,10 @@
                     document.getElementById('room-display-name').innerText = config.room.name || "My Room";
                 }
 
+                if (config.security) {
+                    document.getElementById('api-key').value = config.security.api_key || "";
+                }
+
             } catch (e) { console.error(e); }
         }
 
@@ -503,6 +523,10 @@
             newConfig.room.max_visitors = parseInt(document.getElementById('room-capacity').value) || 5;
             newConfig.room.auto_announce = document.getElementById('auto-announce').checked;
             newConfig.room.discovery_api_url = document.getElementById('discovery-url').value;
+
+            if (!newConfig.security) newConfig.security = {};
+            const apiKeyInput = document.getElementById('api-key').value.trim();
+            newConfig.security.api_key = apiKeyInput === "" ? null : apiKeyInput;
 
             // Send
             const btn = document.getElementById('save-btn');
