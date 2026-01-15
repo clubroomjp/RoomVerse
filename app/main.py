@@ -7,7 +7,7 @@ from sqlmodel import Session
 from app.core.llm import llm_client
 from app.core.config import config, Config, save_config
 from app.core.translator import translator
-from app.core.database import create_db_and_tables, get_session, log_visit, get_relationship, ConversationLog
+from app.core.database import create_db_and_tables, get_session, log_visit, get_relationship, ConversationLog, LoreEntry
 
 from contextlib import asynccontextmanager
 from app.core.tunnel import start_tunnel
@@ -374,6 +374,82 @@ async def delete_all_logs():
         session.commit()
     return {"status": "deleted"}
 
+@app.get("/api/lore")
+async def list_lore_entries():
+    """List all lorebook entries."""
+    with get_session_wrapper() as session:
+        from sqlmodel import select
+        entries = session.exec(select(LoreEntry)).all()
+        return entries
+
+class LoreEntryRequest(BaseModel):
+    keyword: str
+    content: str
+    source: str = "host"
+
+@app.post("/api/lore")
+async def save_lore_entry(entry: LoreEntryRequest):
+    """Create or update a lore entry."""
+    with get_session_wrapper() as session:
+        existing = session.get(LoreEntry, entry.keyword)
+        if existing:
+            existing.content = entry.content
+            existing.source = entry.source # Update source?
+            session.add(existing)
+        else:
+            new_entry = LoreEntry(keyword=entry.keyword, content=entry.content, source=entry.source)
+            session.add(new_entry)
+        session.commit()
+    return {"status": "saved", "keyword": entry.keyword}
+
+@app.delete("/api/lore/{keyword}")
+async def delete_lore_entry(keyword: str):
+    """Delete a lore entry."""
+    from sqlmodel import delete
+    with get_session_wrapper() as session:
+        session.exec(delete(LoreEntry).where(LoreEntry.keyword == keyword))
+        session.commit()
+    return {"status": "deleted", "keyword": keyword}
+
+# Helper wrapper for session since dependency might not work in simple calls
+def get_session_wrapper():
+    from app.core.database import engine
+    return Session(engine)
+
+def get_lore_context(session: Session, message: str, depth: int = 2) -> str:
+    """
+    Recursively find lore entries matching keywords in the message.
+    """
+    from sqlmodel import select
+    
+    found_entries = {} # keyword -> content
+    search_text = message
+    
+    # Get all keywords first (Optimization: valid if DB is small. For large DB, use FTS or specific search)
+    all_lore = session.exec(select(LoreEntry)).all()
+    if not all_lore:
+        return ""
+        
+    for _ in range(depth):
+        new_found = False
+        for entry in all_lore:
+            if entry.keyword not in found_entries and entry.keyword in search_text:
+                found_entries[entry.keyword] = entry.content
+                search_text += f" {entry.content}" # Append content to search for nested keywords
+                new_found = True
+        
+        if not new_found:
+            break
+            
+    if not found_entries:
+        return ""
+        
+    context_str = "[Lorebook Info]\n"
+    for k, v in found_entries.items():
+        context_str += f"- {k}: {v}\n"
+    
+    return context_str
+
 # --- Public Endpoints ---
 
 @app.get("/card", response_model=CharacterCard)
@@ -439,9 +515,40 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     if config.translation.enabled:
         llm_input_msg = translator.translate(visitor_msg_original, target_lang="en")
 
+    # --- Lorebook Logic (Command & Context) ---
+    lore_context = ""
+    
+    # 1. Command Check (!learn)
+    if llm_input_msg.startswith("!learn "):
+        # Format: !learn <keyword> <content>
+        parts = llm_input_msg.split(" ", 2)
+        if len(parts) == 3:
+            kw = parts[1]
+            cnt = parts[2]
+            # Save to DB
+            existing = session.get(LoreEntry, kw)
+            if existing:
+                 existing.content = cnt
+                 existing.source = "visitor"
+                 session.add(existing)
+            else:
+                 new_entry = LoreEntry(keyword=kw, content=cnt, source="visitor")
+                 session.add(new_entry)
+            session.commit()
+            
+            # System Response
+            room_manager.add_message(config.instance_id, "System", f"Learned: {kw}")
+            return VisitResponse(host_name="System", response=f"Allowed access to Lorebook. Registered '{kw}'.")
+    
+    # 2. Context Lookup
+    lore_context = get_lore_context(session, llm_input_msg)
+    
     rel_context = f"Affinity Score: {relation.affinity}\n"
     if relation.memory_summary:
         rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
+    
+    if lore_context:
+        rel_context += f"\n{lore_context}\n"
     
     async with room_manager.processing_lock:
         visitor_count = room_manager.get_active_visitor_count()
@@ -530,6 +637,31 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     if config.translation.enabled:
         llm_input_msg = translator.translate(visitor_msg_original, target_lang="en")
 
+    # --- Lorebook Logic (Command & Context) ---
+    lore_context = ""
+    
+    # 1. Command Check (!learn)
+    if llm_input_msg.startswith("!learn "):
+        parts = llm_input_msg.split(" ", 2)
+        if len(parts) == 3:
+            kw = parts[1]
+            cnt = parts[2]
+            existing = session.get(LoreEntry, kw)
+            if existing:
+                 existing.content = cnt
+                 existing.source = "visitor"
+                 session.add(existing)
+            else:
+                 new_entry = LoreEntry(keyword=kw, content=cnt, source="visitor")
+                 session.add(new_entry)
+            session.commit()
+            
+            room_manager.add_message(config.instance_id, "System", f"Learned: {kw}")
+            return ChatResponse(session_id=session_id, response=f"Learned: {kw}")
+
+    # 2. Context Lookup
+    lore_context = get_lore_context(session, llm_input_msg)
+
     async with room_manager.processing_lock:
         visitor_count = room_manager.get_active_visitor_count()
         scene_context = ""
@@ -537,6 +669,9 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         if visitor_count > 1:
             scene_context = room_manager.get_recent_context_text()
             rel_context += f"\n[Scene Context - The room is active with {visitor_count} visitors]\n{scene_context}\n"
+        
+        if lore_context:
+            rel_context += f"\n{lore_context}\n"
 
         # Generate Response (English Logic)
         response_text = llm_client.generate_response(

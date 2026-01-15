@@ -88,7 +88,17 @@ const i18n = {
         enter_password: "Enter Room Password",
         password_desc: "This room is secured. Please enter the API Key.",
         cancel: "Cancel",
-        submit: "Submit"
+        submit: "Submit",
+
+        // Lore
+        tab_lore: "Lore",
+        lore_title: "Lorebook (World Info)",
+        add_lore: "Add Entry",
+        lore_keyword: "Keyword",
+        lore_content: "Description / Definition",
+        lore_modal_title: "Edit Lore",
+        lore_select_hint: "Select an entry to view/edit",
+        save_btn: "Save"
     },
     ja: {
         subtitle: "AIノード管理",
@@ -167,7 +177,17 @@ const i18n = {
         enter_password: "ルームパスワード入力",
         password_desc: "このルームは保護されています。APIキーを入力してください。",
         cancel: "キャンセル",
-        submit: "送信"
+        submit: "送信",
+
+        // Lore
+        tab_lore: "用語集",
+        lore_title: "用語集 (Lorebook)",
+        add_lore: "追加",
+        lore_keyword: "キーワード",
+        lore_content: "説明・定義",
+        lore_modal_title: "用語の編集",
+        lore_select_hint: "項目を選択して編集",
+        save_btn: "保存"
     }
 };
 
@@ -181,7 +201,7 @@ function switchTab(tabId) {
     const activeClass = state.theme === 'dark' ? 'bg-slate-700' : 'bg-white shadow';
     const inactiveClass = 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300';
 
-    ['dashboard', 'lobby', 'room', 'logs'].forEach(t => {
+    ['dashboard', 'lobby', 'room', 'logs', 'lore'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if (t === tabId) {
             btn.className = `px-4 py-2 rounded-md text-sm font-bold transition-transform transform scale-105 shadow ${state.theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-white text-slate-800'}`;
@@ -198,6 +218,12 @@ function switchTab(tabId) {
     // Logs Load
     if (tabId === 'logs') {
         refreshLogs();
+    }
+    if (tabId === 'logs') {
+        refreshLogs();
+    }
+    if (tabId === 'lore') {
+        renderLoreList();
     }
     if (tabId === 'room') {
         startChatPolling();
@@ -697,6 +723,140 @@ function submitPassword() {
     } else if (action === 'agent') {
         sendAgent(finalUrl);
     }
+}
+
+// --- Lorebook Logic ---
+let allLoreEntries = [];
+
+async function renderLoreList() {
+    const list = document.getElementById('lore-list');
+    const search = document.getElementById('lore-search').value.toLowerCase();
+
+    try {
+        const res = await fetch('/api/lore');
+        allLoreEntries = await res.json();
+    } catch (e) { console.error(e); }
+
+    const filtered = allLoreEntries.filter(e => e.keyword.toLowerCase().includes(search));
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center text-slate-400 text-xs mt-4">No entries found.</div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map(item => `
+        <div onclick="selectLore('${item.keyword}')" class="p-3 bg-white dark:bg-slate-800 rounded shadow-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700/50 transition border-l-4 ${item.source === 'host' ? 'border-blue-500' : 'border-green-500'}">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-700 dark:text-slate-200">${item.keyword}</span>
+                <span class="text-[10px] uppercase font-mono px-1 rounded ${item.source === 'host' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">${item.source}</span>
+            </div>
+            <p class="text-xs text-slate-500 line-clamp-1 mt-1">${item.content}</p>
+        </div>
+    `).join('');
+}
+
+function selectLore(keyword) {
+    const item = allLoreEntries.find(e => e.keyword === keyword);
+    if (!item) return;
+    openLoreModal(item);
+}
+
+function openLoreModal(item = null) {
+    const modal = document.getElementById('lore-modal');
+    modal.classList.remove('hidden');
+
+    if (item) {
+        document.getElementById('lore-modal-title').innerText = i18n[state.lang].lore_modal_title || 'Edit Lore';
+        document.getElementById('lore-keyword').value = item.keyword;
+        document.getElementById('lore-keyword').disabled = true; // Key cannot be changed easily for now
+        document.getElementById('lore-content').value = item.content;
+    } else {
+        document.getElementById('lore-modal-title').innerText = i18n[state.lang].add_lore || 'Add Lore';
+        document.getElementById('lore-keyword').value = '';
+        document.getElementById('lore-keyword').disabled = false;
+        document.getElementById('lore-content').value = '';
+    }
+}
+
+function closeLoreModal() {
+    document.getElementById('lore-modal').classList.add('hidden');
+}
+
+async function saveLoreEntry() {
+    const keyword = document.getElementById('lore-keyword').value.trim();
+    const content = document.getElementById('lore-content').value.trim();
+    if (!keyword || !content) return;
+
+    try {
+        const res = await fetch('/api/lore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword, content, source: 'host' })
+        });
+        if (res.ok) {
+            closeLoreModal();
+            renderLoreList();
+        }
+    } catch (e) { alert('Error saving lore'); }
+}
+
+function openTeachModal() {
+    // Re-use lore modal but for "Teaching" (Host manually teaching)
+    // Actually, the "Teach" button in Chat UI is for sending the !learn command, 
+    // OR just adding to DB?
+    // If we add to DB directly, it's same as "Add Lore".
+    // User asked for "Teach AI command... via button".
+    // Let's implement it as: Open a modal -> Input -> Send "!learn KW Content" message to chat.
+    // This allows the AI to react to it as if it was a command in chat.
+
+    const modal = document.getElementById('lore-modal');
+    modal.classList.remove('hidden');
+    document.getElementById('lore-modal-title').innerText = "Teach AI (Send Command)";
+    document.getElementById('lore-keyword').value = '';
+    document.getElementById('lore-keyword').disabled = false;
+    document.getElementById('lore-content').value = '';
+
+    // Override Save button to behave as Send Command
+    const saveBtn = modal.querySelector('button[onclick="saveLoreEntry()"]');
+    saveBtn.setAttribute('onclick', 'sendTeachCommand()');
+    saveBtn.innerText = "Teach";
+}
+
+async function sendTeachCommand() {
+    const keyword = document.getElementById('lore-keyword').value.trim();
+    const content = document.getElementById('lore-content').value.trim();
+    if (!keyword || !content) return;
+
+    // Construct command
+    const cmd = `!learn ${keyword} ${content}`;
+
+    // Send as Host Message
+    // Reuse sendHostMessage logic but with custom text
+    try {
+        await fetch('/api/room/chat', { // Assuming endpoint for host chat logic? 
+            // Wait, sendHostMessage() in dashboard simply calls... wait, where is sendHostMessage logic?
+            // Ah, sendHostMessage() is in lines 600+. I'll fetch it.
+        });
+
+        // Actually, just calling the backend chat API or reusing the input field.
+        // Let's reuse the input field logic for simplicity.
+        // But better to call API directly if possible.
+        // Let's simulate input.
+        const input = document.getElementById('host-input');
+        const originalVal = input.value;
+        input.value = cmd;
+        await sendHostMessage(); // This function will clear input
+        // Restore if needed? No, command sent.
+
+        closeLoreModal();
+
+        // Reset button
+        const modal = document.getElementById('lore-modal');
+        const saveBtn = modal.querySelector('button[onclick="sendTeachCommand()"]');
+        saveBtn.setAttribute('onclick', 'saveLoreEntry()');
+        saveBtn.innerText = i18n[state.lang].save_btn;
+
+    } catch (e) { console.error(e); }
 }
 
 

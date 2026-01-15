@@ -54,6 +54,10 @@
                     class="px-4 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="tab_logs">
                     Logs
                 </button>
+                <button onclick="switchTab('lore')" id="tab-lore"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors" data-i18n="tab_lore">
+                    Lore
+                </button>
             </nav>
 
             <div class="flex items-center space-x-4">
@@ -356,6 +360,44 @@
                 </div>
             </section>
 
+            <!-- SECTION: Lore -->
+            <section id="section-lore" class="tab-content hidden h-[calc(100vh-140px)]">
+                <div class="glass w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+                    <!-- Left: Lore List -->
+                    <div
+                        class="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 flex flex-col h-1/3 md:h-full">
+                        <div
+                            class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-700 dark:text-slate-200" data-i18n="lore_title">Lorebook
+                            </h3>
+                            <button onclick="openLoreModal()"
+                                class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold transition">
+                                <i class="fas fa-plus mr-1"></i> <span data-i18n="add_lore">Add</span>
+                            </button>
+                        </div>
+                        <div
+                            class="p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50">
+                            <input type="text" id="lore-search" placeholder="Search keywords..."
+                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 text-xs outline-none text-slate-800 dark:text-white"
+                                onkeyup="renderLoreList()">
+                        </div>
+                        <div id="lore-list" class="flex-1 overflow-y-auto p-2 space-y-2">
+                            <!-- Items injected here -->
+                            <div class="text-center text-slate-400 text-sm mt-10">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Editor/Preview -->
+                    <div
+                        class="w-full md:w-2/3 flex flex-col h-2/3 md:h-full bg-slate-50 dark:bg-[#0f172a] p-6 justify-center items-center text-slate-400">
+                        <div class="text-center">
+                            <i class="fas fa-book text-6xl mb-4 opacity-30"></i>
+                            <p data-i18n="lore_select_hint">Select an entry to edit</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- SECTION: Room (Chat) -->
             <section id="section-room" class="tab-content hidden">
                 <div class="glass rounded-xl shadow-2xl h-[80vh] flex flex-col max-w-5xl mx-auto overflow-hidden">
@@ -393,6 +435,11 @@
                             data-i18n-placeholder="host_input_placeholder"
                             class="flex-1 bg-slate-100 dark:bg-slate-700 border-0 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none dark:text-white transition-colors"
                             onkeydown="if(event.key==='Enter') sendHostMessage()">
+                        <button onclick="openTeachModal()"
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded font-bold shadow-lg transition-transform active:scale-95 text-xs mr-2"
+                            title="Teach AI new lore">
+                            <i class="fas fa-graduation-cap"></i>
+                        </button>
                         <button onclick="sendHostMessage()"
                             class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-bold shadow-lg transition-transform active:scale-95"
                             data-i18n="send_btn">Send</button>
@@ -467,6 +514,34 @@
                 <button onclick="submitPassword()"
                     class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-lg"
                     data-i18n="submit">Submit</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Lore/Teach Modal -->
+    <div id="lore-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center anime-fade-in">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-96 transform transition-all scale-100">
+            <h3 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" id="lore-modal-title"
+                data-i18n="lore_modal_title">Add Lore</h3>
+
+            <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="lore_keyword">Keyword</label>
+            <input type="text" id="lore-keyword"
+                class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2 mb-4 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white font-bold"
+                placeholder="Excalibur">
+
+            <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="lore_content">Description</label>
+            <textarea id="lore-content" rows="4"
+                class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2 mb-4 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                placeholder="A legendary sword..."></textarea>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeLoreModal()"
+                    class="px-4 py-2 rounded text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                    data-i18n="cancel">Cancel</button>
+                <button onclick="saveLoreEntry()"
+                    class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-lg"
+                    data-i18n="save_btn">Save</button>
             </div>
         </div>
     </div>

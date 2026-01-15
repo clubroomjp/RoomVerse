@@ -27,6 +27,12 @@ class ConversationLog(SQLModel, table=True):
     sender: str # "visitor" or "host"
     message: str
 
+class LoreEntry(SQLModel, table=True):
+    keyword: str = Field(primary_key=True)
+    content: str
+    source: str = Field(default="host") # "host" or "visitor"
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+
 # --- Database Connection ---
 
 sqlite_file_name = "logs.sqlite"
