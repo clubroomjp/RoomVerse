@@ -291,6 +291,10 @@
                         <div class="flex gap-2">
                             <span id="room-live-badge"
                                 class="px-2 py-1 rounded bg-green-500/10 text-green-500 text-xs border border-green-500/20 hidden">LIVE</span>
+                            <button id="room-toggle-btn-header" onclick="toggleRoom()"
+                                class="px-3 py-1 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded shadow-lg transition-transform hover:scale-105">
+                                CLOSE ROOM
+                            </button>
                         </div>
                     </div>
 
@@ -501,6 +505,7 @@
         function updateRoomStatusUI(isOpen, publicUrl) {
             const statusText = document.getElementById('room-status-text');
             const toggleBtn = document.getElementById('room-toggle-btn');
+            const headerToggleBtn = document.getElementById('room-toggle-btn-header');
             const urlEl = document.getElementById('room-public-url');
             const liveBadge = document.getElementById('room-live-badge');
 
@@ -514,8 +519,16 @@
                 statusText.innerText = 'OPEN';
                 statusText.className = 'text-xs text-green-500 font-bold uppercase';
 
-                toggleBtn.innerText = i18n[state.lang].close_room;
-                toggleBtn.className = 'px-3 py-1 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+                const closeText = i18n[state.lang].close_room;
+                const closeClass = 'px-3 py-1 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+
+                toggleBtn.innerText = closeText;
+                toggleBtn.className = closeClass;
+
+                if (headerToggleBtn) {
+                    headerToggleBtn.innerText = closeText;
+                    headerToggleBtn.className = closeClass;
+                }
 
                 if (publicUrl) {
                     urlEl.textContent = publicUrl;
@@ -533,8 +546,16 @@
                 statusText.innerText = 'CLOSED';
                 statusText.className = 'text-xs text-red-500 font-bold uppercase';
 
-                toggleBtn.innerText = i18n[state.lang].open_room;
-                toggleBtn.className = 'px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+                const openText = i18n[state.lang].open_room;
+                const openClass = 'px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+
+                toggleBtn.innerText = openText;
+                toggleBtn.className = openClass;
+
+                if (headerToggleBtn) {
+                    headerToggleBtn.innerText = openText;
+                    headerToggleBtn.className = openClass;
+                }
 
                 urlEl.classList.add('hidden');
 
