@@ -3,20 +3,36 @@ import html
 from app.core.config import config
 import time
 
+import asyncio
+
 class RoomManager:
     def __init__(self):
-        self.visitors: Dict[str, dict] = {} # visitor_id -> {info}
+        # Visitor ID -> { name, callback_url, last_seen }
+        self.active_visitors: Dict[str, dict] = {}
+        # List of { timestamp, sender_id, sender_name, message }
         self.chat_history: List[dict] = []
         self._max_capacity = config.room.max_visitors
         
+        # New Feature: Room Status & Locking
+        self.is_open = True
+        self.processing_lock = asyncio.Lock()
+
     def can_accept_visitor(self, visitor_id: str) -> bool:
-        if visitor_id in self.visitors:
+        if not self.is_open:
+            return False
+        
+        # If already registered, allow
+        if visitor_id in self.active_visitors:
             return True
-        return len(self.visitors) < self._max_capacity
+            
+        # Cleanup old visitors (e.g. inactive for 10 mins)
+        self._cleanup_inactive()
+        
+        return len(self.active_visitors) < self._max_capacity
 
     def register_visitor(self, visitor_id: str, name: str, callback_url: str = None):
         """Registers a visitor and updates their heartbeat/info."""
-        self.visitors[visitor_id] = {
+        self.active_visitors[visitor_id] = {
             "name": self.sanitize(name),
             "callback_url": callback_url,
             "last_seen": time.time()

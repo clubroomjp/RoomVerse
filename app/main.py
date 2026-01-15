@@ -211,19 +211,25 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     if relation.memory_summary:
         rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
     
-    response_text = llm_client.generate_response(
-        visitor_name=request.visitor_name,
-        message=visitor_msg_original, 
-        context=request.context,
-        relationship_context=rel_context
-    )
+    async with room_manager.processing_lock:
+        visitor_count = room_manager.get_active_visitor_count()
+        if visitor_count > 1:
+            scene_context = room_manager.get_recent_context_text()
+            rel_context += f"\n[Scene Context - The room is active with {visitor_count} visitors]\n{scene_context}\n"
+
+        response_text = llm_client.generate_response(
+            visitor_name=request.visitor_name,
+            message=visitor_msg_original, 
+            context=request.context,
+            relationship_context=rel_context
+        )
     
-    # 5. Handle Response Translation for Dashboard
-    display_response = response_text
-    if config.translation.enabled:
-        display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
-    
-    room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
+        # 5. Handle Response Translation for Dashboard
+        display_response = response_text
+        if config.translation.enabled:
+            display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+        
+        room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
     
     return VisitResponse(
         host_name=config.character.name,
@@ -265,30 +271,52 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
          if relation.memory_summary:
             rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
 
-    # Generate Response (English Logic)
-    response_text = llm_client.generate_response(
-        visitor_name=visitor_name,
-        message=visitor_msg_original,
-        context=[], 
-        relationship_context=rel_context
-    )
-    
-    # Handle Response Translation for Dashboard
-    display_response = response_text
-    if config.translation.enabled:
-        display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+    async with room_manager.processing_lock:
+        visitor_count = room_manager.get_active_visitor_count()
+        scene_context = ""
+        # If more than 1 visitor (or just to be safe, if > 0 and we want shared context), inject history
+        if visitor_count > 1:
+            scene_context = room_manager.get_recent_context_text()
+            rel_context += f"\n[Scene Context - The room is active with {visitor_count} visitors]\n{scene_context}\n"
 
-    room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
+        # Generate Response (English Logic)
+        response_text = llm_client.generate_response(
+            visitor_name=visitor_name,
+            message=visitor_msg_original,
+            context=[], 
+            relationship_context=rel_context
+        )
     
-    # Log response to DB
-    log_out = ConversationLog(
-        session_id=session_id, visitor_id=request.visitor_id,
-        sender="host", message=room_manager.sanitize(response_text)
-    )
-    session.add(log_out)
-    session.commit()
+        # Handle Response Translation for Dashboard
+        display_response = response_text
+        if config.translation.enabled:
+            display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+
+        room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
+        
+        # Log response to DB
+        log_out = ConversationLog(
+            session_id=session_id, visitor_id=request.visitor_id,
+            sender="host", message=room_manager.sanitize(response_text)
+        )
+        session.add(log_out)
+        session.commit()
     
     return ChatResponse(session_id=session_id, response=response_text)
+
+@app.post("/api/room/toggle")
+async def toggle_room(data: dict = None):
+    """
+    Toggles the room open/closed status.
+    """
+    # Simple security check: enforce host-only rule if needed, but for now open to dashboard
+    room_manager.is_open = not room_manager.is_open
+    status = "open" if room_manager.is_open else "closed"
+    return {"status": status, "is_open": room_manager.is_open}
+
+@app.get("/api/room/status")
+async def get_room_status():
+    return {"is_open": room_manager.is_open, "active_visitors": room_manager.get_active_visitor_count()}
 
 @app.post("/api/host/chat")
 async def host_chat(request: HostChatRequest, session: Session = Depends(get_session)):

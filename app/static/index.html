@@ -203,6 +203,22 @@
                                     </div>
                                 </label>
                             </div>
+
+                            <!-- Room Open/Close Status -->
+                            <div
+                                class="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <span class="block text-sm font-bold text-slate-700 dark:text-slate-200"
+                                        data-i18n="room_status">Room Status</span>
+                                    <span id="room-status-text"
+                                        class="text-xs text-green-500 font-bold uppercase">OPEN</span>
+                                </div>
+                                <button id="room-toggle-btn" onclick="toggleRoom()"
+                                    class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded shadow-lg transition-transform hover:scale-105">
+                                    CLOSE ROOM
+                                </button>
+                            </div>
+
                             <div>
                                 <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
                                     data-i18n="discovery_url">Discovery API URL</label>
@@ -317,6 +333,9 @@
                 auto_announce: "Auto-Publish to Discovery",
                 discovery_url: "Discovery API URL",
                 active_rooms: "Active Rooms",
+                room_status: "Room Status",
+                close_room: "CLOSE ROOM",
+                open_room: "OPEN ROOM",
                 tab_dashboard: "Dashboard",
                 tab_lobby: "Lobby",
                 tab_room: "My Room",
@@ -347,6 +366,9 @@
                 auto_announce: "ディレクトリに自動公開",
                 discovery_url: "Discovery API URL",
                 active_rooms: "公開中のルーム",
+                room_status: "ルーム状態",
+                close_room: "ルームを閉じる",
+                open_room: "ルームを開ける",
                 tab_dashboard: "ダッシュボード",
                 tab_lobby: "ロビー",
                 tab_room: "マイルーム",
