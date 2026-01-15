@@ -14,13 +14,17 @@ from app.core.room_manager import room_manager
 from app.core.discovery import get_discovery_client
 import uuid
 
+# Global state
+GLOBAL_PUBLIC_URL = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global GLOBAL_PUBLIC_URL
     # Startup
     create_db_and_tables()
-    public_url = start_tunnel(PORT)
-    if public_url:
-        print(f"!!! RoomVerse Node is LIVE at: {public_url} !!!")
+    GLOBAL_PUBLIC_URL = start_tunnel(PORT)
+    if GLOBAL_PUBLIC_URL:
+        print(f"!!! RoomVerse Node is LIVE at: {GLOBAL_PUBLIC_URL} !!!")
     yield
     # Shutdown logic if needed
 
@@ -96,11 +100,26 @@ async def update_config(new_config: Config):
     config.character = new_config.character
     config.llm = new_config.llm
     config.translation = new_config.translation
+    config.room = new_config.room
+    config.dashboard = new_config.dashboard
     save_config(config)
     
     llm_client.character = config.character
+    llm_client.character = config.character
     llm_client.model = config.llm.model
     
+    # Trigger Announcement if enabled and URL exists
+    if config.room.auto_announce and GLOBAL_PUBLIC_URL:
+        from app.core.discovery import get_discovery_client
+        client = get_discovery_client(config)
+        metadata = {
+            "name": config.room.name,
+            "character": config.character.name,
+            "max_visitors": config.room.max_visitors
+        }
+        success = client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
+        print(f"[ConfigUpdate] Announced presence: {success}")
+
     return {"status": "updated"}
 # ------------------
 

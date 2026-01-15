@@ -43,6 +43,7 @@ class HttpDiscoveryClient(DiscoveryClient):
             payload = {
                 "uuid": uuid,
                 "url": url,
+                "name": metadata.get("name", "Unknown Room"),
                 "metadata": metadata
             }
             resp = requests.post(f"{self.api_url}/announce", json=payload, timeout=5)
@@ -62,6 +63,7 @@ class HttpDiscoveryClient(DiscoveryClient):
 
 def get_discovery_client(config) -> DiscoveryClient:
     """Factory to get the appropriate client based on config."""
-    if hasattr(config, 'discovery_api_url') and config.discovery_api_url:
-        return HttpDiscoveryClient(config.discovery_api_url)
+    # Check config.room.discovery_api_url
+    if hasattr(config, 'room') and config.room and config.room.discovery_api_url:
+        return HttpDiscoveryClient(config.room.discovery_api_url)
     return MockDiscoveryClient()
