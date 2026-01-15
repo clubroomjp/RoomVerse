@@ -247,6 +247,18 @@
                                 <input type="text" id="discovery-url"
                                     class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs text-slate-800 dark:text-white">
                             </div>
+
+                            <!-- Agent Settings -->
+                            <div>
+                                <h3 class="text-md font-bold text-slate-700 dark:text-slate-200 mt-6 mb-2"
+                                    data-i18n="agent_header">Agent Settings</h3>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                        data-i18n="max_turns">Max Connection Turns</label>
+                                    <input type="number" id="agent-max-turns" min="1" max="50" value="10"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-slate-800 dark:text-white">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -375,7 +387,13 @@
                 refresh: "Refresh",
                 connect_btn: "Connect",
                 host_input_placeholder: "Speak as Host...",
-                send_btn: "Send"
+                send_btn: "Send",
+                agent_header: "Agent Settings",
+                max_turns: "Max Connection Turns",
+                send_agent_btn: "Send Agent",
+                send_agent_confirm: "Send your agent to visit {url}?",
+                agent_sent: "Agent Dispatched! Check your chat log for updates.",
+                agent_fail: "Failed to dispatch agent."
             },
             ja: {
                 subtitle: "AIノード管理",
@@ -413,7 +431,13 @@
                 refresh: "更新",
                 connect_btn: "接続",
                 host_input_placeholder: "ホストとして発言...",
-                send_btn: "送信"
+                send_btn: "送信",
+                agent_header: "Agent設定 (AI接続)",
+                max_turns: "最大会話数 (Max Turns)",
+                send_agent_btn: "AI同士で会話",
+                send_agent_confirm: "{url} にAIを派遣しますか？",
+                agent_sent: "AIを派遣しました！チャットログを確認してください。",
+                agent_fail: "派遣に失敗しました。"
             }
         };
 
@@ -599,6 +623,9 @@
 
                     document.getElementById('room-display-name').innerText = config.room.name || "My Room";
                 }
+                if (config.agent) {
+                    document.getElementById('agent-max-turns').value = config.agent.max_turns || 10;
+                }
 
                 if (config.security) {
                     document.getElementById('api-key').value = config.security.api_key || "";
@@ -630,6 +657,9 @@
             newConfig.room.max_visitors = parseInt(document.getElementById('room-capacity').value) || 5;
             newConfig.room.auto_announce = document.getElementById('auto-announce').checked;
             newConfig.room.discovery_api_url = document.getElementById('discovery-url').value;
+
+            if (!newConfig.agent) newConfig.agent = {};
+            newConfig.agent.max_turns = parseInt(document.getElementById('agent-max-turns').value) || 10;
 
             if (!newConfig.security) newConfig.security = {};
             const apiKeyInput = document.getElementById('api-key').value.trim();
@@ -681,8 +711,8 @@
                                 <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
                                 <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>
                             <div class="mt-4 flex justify-end gap-2">
-                                <button onclick="sendAgent('${room.url}')" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
-                                    <i class="fas fa-robot mr-1"></i> Send Agent
+                                <button onclick="sendAgent('${room.url}')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                    <i class="fas fa-robot mr-1"></i> ${i18n[state.lang].send_agent_btn}
                                 </button>
                                 <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
                                     ${i18n[state.lang].connect_btn}
@@ -804,7 +834,9 @@
         }
 
         async function sendAgent(url) {
-            if (!confirm(`Send your agent to visit ${url}?`)) return;
+            const texts = i18n[state.lang];
+            const msg = texts.send_agent_confirm.replace('{url}', url);
+            if (!confirm(msg)) return;
 
             try {
                 const res = await fetch('/api/room/connect_agent', {
@@ -814,14 +846,14 @@
                 });
 
                 if (res.ok) {
-                    alert("Agent Dispatched! Check your chat log for updates.");
+                    alert(texts.agent_sent);
                     switchTab('chat');
                 } else {
-                    alert("Failed to dispatch agent.");
+                    alert(texts.agent_fail);
                 }
             } catch (e) {
                 console.error(e);
-                alert("Error sending agent.");
+                alert(texts.agent_fail);
             }
         }
 

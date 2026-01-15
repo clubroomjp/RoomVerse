@@ -150,9 +150,11 @@ class RoomManager:
                     self.add_message("SYSTEM", "System", f"❌ Failed to connect: {e}")
                     return
 
-                # Conversation Loop (Max 10 turns)
-                
-                for i in range(10):
+                # Conversation Loop
+                max_turns = config.agent.max_turns
+                self.add_message("SYSTEM", "System", f"Starting conversation (Max turns: {max_turns})")
+
+                for i in range(max_turns):
                     await asyncio.sleep(2) # Natural pause
                     
                     # 2. My Turn (Generate Response)

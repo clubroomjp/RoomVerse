@@ -130,6 +130,7 @@ async def update_config(new_config: Config):
     config.room = new_config.room
     config.dashboard = new_config.dashboard
     config.security = new_config.security
+    config.agent = new_config.agent
     save_config(config)
     
     llm_client.character = config.character

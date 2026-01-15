@@ -38,6 +38,9 @@ class TranslationConfig(BaseModel):
 class DashboardConfig(BaseModel):
     language: str = "en"
 
+class AgentConfig(BaseModel):
+    max_turns: int = 10
+
 class Config(BaseModel):
     instance_id: str
     character: CharacterConfig
@@ -48,6 +51,7 @@ class Config(BaseModel):
     dashboard: DashboardConfig = DashboardConfig()
     cloudflare: CloudflareConfig = CloudflareConfig()
     room: RoomConfig = RoomConfig()
+    agent: AgentConfig = AgentConfig()
 
 def load_config(path: str = "app/config.json") -> Config:
     if not os.path.exists(path):
