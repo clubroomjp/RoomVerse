@@ -7,3 +7,5 @@ pyngrok
 deep-translator
 
 
+
+aiohttp
