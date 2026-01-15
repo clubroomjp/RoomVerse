@@ -32,7 +32,8 @@ async def announce_presence_task():
                     "description": config.room.description,
                     "max_visitors": config.room.max_visitors,
                     "character": config.character.name,
-                    "model": config.llm.model
+                    "model": config.llm.model,
+                    "locked": bool(config.security.api_key)
                 }
                 client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
                 # print(f"[Heartbeat] Announced presence.") # Optional: noisy log

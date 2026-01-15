@@ -480,7 +480,10 @@ async function fetchRooms() {
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="relative z-10 flex justify-between items-start">
                     <div>
-                        <h3 class="font-bold text-lg text-blue-400 mb-1">${room.name || "Unknown Room"}</h3>
+                        <h3 class="font-bold text-lg text-blue-400 mb-1">
+                            ${room.metadata?.locked ? '<i class="fas fa-lock text-yellow-500 mr-2" title="Auth Required"></i>' : ''}
+                            ${room.name || "Unknown Room"}
+                        </h3>
                         <div class="flex items-center gap-2 mb-2">
                             <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${i18n[state.lang].capacity}: ${room.metadata?.max_visitors || "?"}</span>
                             <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${room.metadata?.character || "Standard AI"}</span>
