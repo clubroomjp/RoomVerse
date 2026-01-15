@@ -8,9 +8,25 @@ venv/
 env/
 .env
 
-# RoomVerse
+# RoomVerse Data
 app/config.json
-# We keep config.json.sample
+logs.sqlite
+*.db
+*.sqlite
+
+# Cloudflare Tunnel
+cloudflared.exe
+cloudflared-windows-amd64.exe
+
+# Node.js / Discovery Service
+node_modules/
+.wrangler/
+package-lock.json
+
+# Build / Distribution
+build/
+dist/
+*.spec
 
 # IDEs
 .vscode/

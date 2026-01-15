@@ -1,8 +1,8 @@
 name = "roomverse-discovery"
 compatibility_date = "2024-01-01"
+main = "src/index.ts"
 
-[d1_databases]
 [[d1_databases]]
 binding = "DB"
 database_name = "roomverse-db"
-database_id = "MESSAGE_FOR_USER: REPLACE_WITH_YOUR_D1_ID"
+database_id = "a7bac714-6c9f-4d48-bd88-18e63d9752dc"
