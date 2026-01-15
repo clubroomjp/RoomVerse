@@ -284,8 +284,13 @@
                                 <h3 class="text-md font-bold text-slate-700 dark:text-slate-200 mt-6 mb-2"
                                     data-i18n="security_header">Security</h3>
                                 <div>
-                                    <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
-                                        data-i18n="api_key_label">API Key (Optional)</label>
+                                    <label
+                                        class="flex items-center gap-1 text-sm font-medium mb-1 text-slate-600 dark:text-slate-300 group relative">
+                                        <span data-i18n="api_key_label">API Key (Optional)</span>
+                                        <i class="fas fa-question-circle help-icon"></i>
+                                        <div class="tooltip-content hidden absolute left-0 bottom-full mb-2 w-64 p-2 bg-slate-800 text-white text-xs rounded z-50 pointer-events-none shadow-xl border border-slate-700"
+                                            data-i18n="help_api_key">?</div>
+                                    </label>
                                     <input type="password" id="api-key" placeholder="Wait for authorization..."
                                         data-i18n-placeholder="api_key_placeholder"
                                         class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-slate-800 dark:text-white font-mono text-sm">
@@ -293,8 +298,13 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
-                                    data-i18n="discovery_url">Discovery API URL</label>
+                                <label
+                                    class="flex items-center gap-1 text-sm font-medium mb-1 text-slate-600 dark:text-slate-300 group relative">
+                                    <span data-i18n="discovery_url">Discovery API URL</span>
+                                    <i class="fas fa-question-circle help-icon"></i>
+                                    <div class="tooltip-content hidden absolute left-0 bottom-full mb-2 w-64 p-2 bg-slate-800 text-white text-xs rounded z-50 pointer-events-none shadow-xl border border-slate-700"
+                                        data-i18n="help_discovery_url">?</div>
+                                </label>
                                 <input type="text" id="discovery-url" list="discovery-url-list"
                                     class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs text-slate-800 dark:text-white">
                                 <datalist id="discovery-url-list">
@@ -462,7 +472,9 @@
                 help_char_persona: "Personality instructions.",
                 help_sys_prompt: "Base behavior rules.",
                 help_trans_enable: "Real-time translation of incoming/outgoing messages.",
-                help_max_turns: "Agent ends conversation after this many exchanges."
+                help_max_turns: "Agent ends conversation after this many exchanges.",
+                help_api_key: "Set an arbitrary string and share it only with users you trust.",
+                help_discovery_url: "Basically, please use the registered URL."
             },
             ja: {
                 subtitle: "AIノード管理",
@@ -515,7 +527,9 @@
                 help_char_persona: "AIの性格や振る舞いの指示書",
                 help_sys_prompt: "根本的な動作ルール",
                 help_trans_enable: "送受信メッセージをリアルタイムで翻訳します",
-                help_max_turns: "この回数だけ会話を往復すると帰還します"
+                help_max_turns: "この回数だけ会話を往復すると帰還します",
+                help_api_key: "任意の文字列を設定して、共有したいユーザーにだけ伝えてください",
+                help_discovery_url: "基本的には、初期登録のURLをお使いください"
             }
         };
 
@@ -777,7 +791,7 @@
                 }
 
                 list.innerHTML = rooms.map(room => `
-                    <div class="glass p-4 rounded-xl border border-slate-700/50 hover:border-blue-500 transition-all group relative overflow-hidden">
+                    <div class="glass p-4 rounded-xl border border-slate-700/50 hover:border-blue-500/50 transition-all group relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="relative z-10 flex justify-between items-start">
                             <div>
@@ -785,7 +799,7 @@
                                 <div class="flex items-center gap-2 mb-2">
                                     <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${i18n[state.lang].capacity}: ${room.metadata?.max_visitors || "?"}</span>
                                     <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${room.metadata?.character || "Standard AI"}</span>
-                                    ${room.metadata?.model ? `<span class="text-xs bg-purple-900/50 border border-purple-500/30 px-2 py-0.5 rounded text-purple-300 font-mono">${room.metadata.model}</span>` : ''}
+                                    ${room.metadata?.model ? `<span class="text-xs bg-purple-900/50 border border-purple-500/30 px-2 py-0.5 rounded text-purple-100 font-mono">${room.metadata.model}</span>` : ''}
                                 </div>
                                 <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
                                 <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>

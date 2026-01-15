@@ -147,7 +147,7 @@ class RoomManager:
                     their_host_name = data.get("host_name", "Host")
                     
                     # Log Their Reply (Monitor)
-                    self.add_message("REMOTE", f"{their_host_name} (Remote)", f"「{their_reply}」")
+                    self.add_message("REMOTE", f"{their_host_name} (Remote)", their_reply, model=data.get("model"))
 
                 except Exception as e:
                     self.add_message("SYSTEM", "System", f"❌ Failed to connect: {e}")
@@ -170,7 +170,7 @@ class RoomManager:
                     )
                     
                     # Log My Reply (Monitor)
-                    self.add_message("AGENT", f"{my_name} (Agent)", f"「{my_reply}」")
+                    self.add_message("AGENT", f"{my_name} (Agent)", my_reply)
                     
                     # Stop Check
                     if "bye" in my_reply.lower() or "goodbye" in my_reply.lower():
@@ -191,7 +191,7 @@ class RoomManager:
                         c_data = c_resp.json()
                         
                         their_reply = c_data.get("response", "")
-                        self.add_message("REMOTE", f"{their_host_name} (Remote)", f"「{their_reply}」")
+                        self.add_message("REMOTE", f"{their_host_name} (Remote)", their_reply, model=c_data.get("model"))
                         
                         if "bye" in their_reply.lower():
                             self.add_message("SYSTEM", "System", "👋 Host ended conversation.")
