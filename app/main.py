@@ -11,6 +11,7 @@ from app.core.database import create_db_and_tables, get_session, log_visit, get_
 from contextlib import asynccontextmanager
 from app.core.tunnel import start_tunnel
 from app.core.room_manager import room_manager
+from app.core.discovery import get_discovery_client
 import uuid
 
 @asynccontextmanager
@@ -70,6 +71,18 @@ class CharacterCard(BaseModel):
 @app.get("/")
 async def root():
     return {"status": "online", "character": config.character.name}
+
+
+
+# --- Discovery API Proxy ---
+@app.get("/api/discovery/rooms")
+async def list_rooms():
+    """
+    Fetches the list of active rooms from the configured Discovery Service.
+    """
+    client = get_discovery_client(config)
+    rooms = client.list_rooms()
+    return rooms
 
 # --- Config API ---
 @app.get("/api/config")

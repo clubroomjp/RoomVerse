@@ -120,6 +120,48 @@
                     </div>
                 </div>
 
+                <!-- Room & Discovery Settings -->
+                <div class="glass rounded-xl p-6 shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 text-green-300" data-i18n="room_settings">Room & Discovery
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="room_name">Room
+                                Name</label>
+                            <input type="text" id="room-name"
+                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300" data-i18n="auto_announce">Auto-Publish to Discovery</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="auto-announce" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500">
+                                </div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-300"
+                                data-i18n="discovery_url">Discovery API URL</label>
+                            <input type="text" id="discovery-url" placeholder="https://roomverse-discovery.workers.dev"
+                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Rooms List -->
+                <div class="glass rounded-xl p-6 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-white" data-i18n="active_rooms">Active Rooms</h2>
+                        <button id="refresh-rooms"
+                            class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Refresh</button>
+                    </div>
+                    <div id="rooms-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <!-- Filled by JS -->
+                        <p class="text-slate-500 text-sm">Loading...</p>
+                    </div>
+                </div>
+
                 <button id="save-btn"
                     class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold shadow-lg transition-transform transform hover:scale-[1.02]"
                     data-i18n="save_btn">
@@ -143,6 +185,12 @@
                 trans_settings: "Translation",
                 trans_enable: "Enable Auto-Translation",
                 trans_target: "Target Language",
+                room_settings: "Room & Discovery",
+                room_name: "Room Name",
+                auto_announce: "Auto-Publish to Discovery",
+                discovery_url: "Discovery API URL",
+                active_rooms: "Active Rooms",
+                connect: "Connect",
                 save_btn: "Save Configuration",
                 saving: "Saving...",
                 saved: "Saved!",
@@ -160,6 +208,12 @@
                 trans_settings: "翻訳設定",
                 trans_enable: "自動翻訳を有効化",
                 trans_target: "翻訳先の言語",
+                room_settings: "ルーム公開設定",
+                room_name: "ルーム名",
+                auto_announce: "ディレクトリに自動公開",
+                discovery_url: "Discovery API URL",
+                active_rooms: "公開中のルーム",
+                connect: "接続",
                 save_btn: "設定を保存",
                 saving: "保存中...",
                 saved: "保存しました！",
@@ -210,9 +264,17 @@
                     document.getElementById('trans-enabled').checked = currentConfig.translation.enabled;
                     document.getElementById('trans-target').value = currentConfig.translation.target_lang || 'ja';
                 }
-            } catch (e) {
-                console.error("Failed to load config", e);
+                document.getElementById('trans-target').value = currentConfig.translation.target_lang || 'ja';
             }
+
+                if (currentConfig.room) {
+                document.getElementById('room-name').value = currentConfig.room.name || "";
+                document.getElementById('auto-announce').checked = currentConfig.room.auto_announce || false;
+                document.getElementById('discovery-url').value = currentConfig.room.discovery_api_url || "";
+            }
+        } catch (e) {
+            console.error("Failed to load config", e);
+        }
         }
 
         async function saveConfig() {
@@ -235,7 +297,13 @@
 
             if (!newConfig.translation) newConfig.translation = {};
             newConfig.translation.enabled = document.getElementById('trans-enabled').checked;
+            newConfig.translation.enabled = document.getElementById('trans-enabled').checked;
             newConfig.translation.target_lang = document.getElementById('trans-target').value;
+
+            if (!newConfig.room) newConfig.room = {};
+            newConfig.room.name = document.getElementById('room-name').value;
+            newConfig.room.auto_announce = document.getElementById('auto-announce').checked;
+            newConfig.room.discovery_api_url = document.getElementById('discovery-url').value;
 
             try {
                 const res = await fetch('/api/config', {
@@ -260,11 +328,43 @@
             }
         }
 
+
+        async function fetchRooms() {
+            const list = document.getElementById('rooms-list');
+            try {
+                list.innerHTML = `<p class="text-slate-500 text-sm">Refreshing...</p>`;
+                const res = await fetch('/api/discovery/rooms');
+                if (!res.ok) throw new Error("Failed to fetch");
+                const rooms = await res.json();
+
+                if (rooms.length === 0) {
+                    list.innerHTML = `<p class="text-slate-500 text-sm">No active rooms found.</p>`;
+                    return;
+                }
+
+                list.innerHTML = rooms.map(room => `
+                    <div class="bg-slate-800/50 p-3 rounded border border-slate-700 flex justify-between items-center group hover:border-blue-500 transition-colors">
+                        <div>
+                            <div class="font-bold text-sm text-blue-300">${room.name || "Unknown Room"}</div>
+                            <div class="text-xs text-slate-400 truncate w-48">${room.url}</div>
+                        </div>
+                        <a href="${room.url}" target="_blank" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-xs rounded text-white font-bold transition-colors">
+                            ${i18n[currentLang] ? i18n[currentLang].connect : "Connect"}
+                        </a>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<p class="text-red-400 text-sm">Failed to load rooms.</p>`;
+            }
+        }
+
+        document.getElementById('refresh-rooms').addEventListener('click', fetchRooms);
         document.getElementById('save-btn').addEventListener('click', saveConfig);
 
         // Initial load
         (async function () {
             await loadConfig();
+            fetchRooms();
         })();
     </script>
 </body>

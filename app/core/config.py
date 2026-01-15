@@ -24,6 +24,7 @@ class RoomConfig(BaseModel):
     name: str = "My Room"
     max_visitors: int = 5
     discovery_api_url: str = None
+    auto_announce: bool = False
 
 class SecurityConfig(BaseModel):
     ngrok_basic_auth: str = None
