@@ -386,18 +386,43 @@ class LoreEntryRequest(BaseModel):
     keyword: str
     content: str
     source: str = "host"
+    keyword_en: Annotated[str | None, "English Translation of Keyword"] = None
+    content_en: Annotated[str | None, "English Translation of Description"] = None
 
 @app.post("/api/lore")
 async def save_lore_entry(entry: LoreEntryRequest):
     """Create or update a lore entry."""
+    
+    # Auto-translate if needed
+    kw_en = entry.keyword_en
+    cnt_en = entry.content_en
+    
+    if config.translation.enabled:
+        if not kw_en and entry.keyword:
+             try:
+                 kw_en = translator.translate(entry.keyword, target_lang="en")
+             except: pass
+        if not cnt_en and entry.content:
+             try:
+                 cnt_en = translator.translate(entry.content, target_lang="en")
+             except: pass
+
     with get_session_wrapper() as session:
         existing = session.get(LoreEntry, entry.keyword)
         if existing:
             existing.content = entry.content
-            existing.source = entry.source # Update source?
+            existing.source = entry.source
+            if kw_en: existing.keyword_en = kw_en
+            if cnt_en: existing.content_en = cnt_en
             session.add(existing)
         else:
-            new_entry = LoreEntry(keyword=entry.keyword, content=entry.content, source=entry.source)
+            new_entry = LoreEntry(
+                keyword=entry.keyword, 
+                content=entry.content, 
+                source=entry.source,
+                keyword_en=kw_en,
+                content_en=cnt_en
+            )
             session.add(new_entry)
         session.commit()
     return {"status": "saved", "keyword": entry.keyword}
@@ -419,11 +444,12 @@ def get_session_wrapper():
 def get_lore_context(session: Session, message: str, depth: int = 2) -> str:
     """
     Recursively find lore entries matching keywords in the message.
+    Supports bilingual search (keyword or keyword_en).
     """
     from sqlmodel import select
     
-    found_entries = {} # keyword -> content
-    search_text = message
+    found_entries = {} # keyword -> content_to_use
+    search_text = message.lower()
     
     # Get all keywords first (Optimization: valid if DB is small. For large DB, use FTS or specific search)
     all_lore = session.exec(select(LoreEntry)).all()
@@ -433,9 +459,20 @@ def get_lore_context(session: Session, message: str, depth: int = 2) -> str:
     for _ in range(depth):
         new_found = False
         for entry in all_lore:
-            if entry.keyword not in found_entries and entry.keyword in search_text:
-                found_entries[entry.keyword] = entry.content
-                search_text += f" {entry.content}" # Append content to search for nested keywords
+            # Check native keyword
+            matched = False
+            if entry.keyword.lower() in search_text:
+                matched = True
+            # Check English keyword if available
+            elif entry.keyword_en and entry.keyword_en.lower() in search_text:
+                matched = True
+            
+            if matched and entry.keyword not in found_entries:
+                # Use English content if available, else native
+                use_content = entry.content_en if entry.content_en else entry.content
+                found_entries[entry.keyword] = (entry.keyword_en, use_content)
+                
+                search_text += f" {use_content}".lower() # Append content to search for nested keywords
                 new_found = True
         
         if not new_found:
@@ -445,8 +482,9 @@ def get_lore_context(session: Session, message: str, depth: int = 2) -> str:
         return ""
         
     context_str = "[Lorebook Info]\n"
-    for k, v in found_entries.items():
-        context_str += f"- {k}: {v}\n"
+    for k, (k_en, v) in found_entries.items():
+        label = f"{k} ({k_en})" if k_en else k
+        context_str += f"- {label}: {v}\n"
     
     return context_str
 
@@ -525,14 +563,32 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
         if len(parts) == 3:
             kw = parts[1]
             cnt = parts[2]
+            
+            # Auto-translate
+            kw_en = None
+            cnt_en = None
+            if config.translation.enabled:
+                try: kw_en = translator.translate(kw, target_lang="en")
+                except: pass
+                try: cnt_en = translator.translate(cnt, target_lang="en")
+                except: pass
+
             # Save to DB
             existing = session.get(LoreEntry, kw)
             if existing:
                  existing.content = cnt
                  existing.source = "visitor"
+                 if kw_en: existing.keyword_en = kw_en
+                 if cnt_en: existing.content_en = cnt_en
                  session.add(existing)
             else:
-                 new_entry = LoreEntry(keyword=kw, content=cnt, source="visitor")
+                 new_entry = LoreEntry(
+                     keyword=kw, 
+                     content=cnt, 
+                     source="visitor",
+                     keyword_en=kw_en,
+                     content_en=cnt_en
+                 )
                  session.add(new_entry)
             session.commit()
             
@@ -646,13 +702,31 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         if len(parts) == 3:
             kw = parts[1]
             cnt = parts[2]
+            
+            # Auto-translate
+            kw_en = None
+            cnt_en = None
+            if config.translation.enabled:
+                try: kw_en = translator.translate(kw, target_lang="en")
+                except: pass
+                try: cnt_en = translator.translate(cnt, target_lang="en")
+                except: pass
+            
             existing = session.get(LoreEntry, kw)
             if existing:
                  existing.content = cnt
                  existing.source = "visitor"
+                 if kw_en: existing.keyword_en = kw_en
+                 if cnt_en: existing.content_en = cnt_en
                  session.add(existing)
             else:
-                 new_entry = LoreEntry(keyword=kw, content=cnt, source="visitor")
+                 new_entry = LoreEntry(
+                     keyword=kw, 
+                     content=cnt, 
+                     source="visitor",
+                     keyword_en=kw_en,
+                     content_en=cnt_en
+                 )
                  session.add(new_entry)
             session.commit()
             

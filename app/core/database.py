@@ -29,7 +29,9 @@ class ConversationLog(SQLModel, table=True):
 
 class LoreEntry(SQLModel, table=True):
     keyword: str = Field(primary_key=True)
+    keyword_en: Optional[str] = None # Auto-translated keyword
     content: str
+    content_en: Optional[str] = None # Auto-translated description
     source: str = Field(default="host") # "host" or "visitor"
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
