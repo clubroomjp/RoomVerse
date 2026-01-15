@@ -78,10 +78,17 @@
                     </p>
                 </div>
             </div>
-            <button onclick="viewCard()"
-                class="text-xs text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
-                <span id="view-card-text">View Card</span>
-            </button>
+
+            <div class="flex items-center">
+                <button onclick="leaveRoom()"
+                    class="text-xs text-red-300 hover:text-red-200 transition-colors bg-red-900/20 px-3 py-1 rounded-full border border-red-900/30 mr-2 hover:bg-red-900/40">
+                    <span id="leave-btn-text">Leave</span>
+                </button>
+                <button onclick="viewCard()"
+                    class="text-xs text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50 hover:bg-slate-700/50">
+                    <span id="view-card-text">View Card</span>
+                </button>
+            </div>
         </div>
 
         <!-- CHAT AREA -->
@@ -138,6 +145,7 @@
                 enter_btn: "Enter Room",
                 room_info: "Room Information",
                 view_card: "View Card",
+                leave_btn: "Leave",
                 online: "Online",
                 visitor: "Visitor",
                 connected: "Connection Established",
@@ -154,6 +162,7 @@
                 enter_btn: "入室する",
                 room_info: "ルーム情報",
                 view_card: "カードを見る",
+                leave_btn: "退出",
                 online: "オンライン",
                 visitor: "人",
                 connected: "接続が確立されました",
@@ -210,20 +219,32 @@
             const texts = i18n[state.lang] || i18n.en;
 
             // Login Modal
-            document.getElementById('welcome-title').innerText = texts.welcome_title;
-            document.getElementById('welcome-desc').innerText = texts.enter_name;
-            document.getElementById('visitor-name').placeholder = texts.name_placeholder;
-            document.querySelector('#login-modal button span').innerText = texts.enter_btn;
+            updateTextById('welcome-title', texts.welcome_title);
+            updateTextById('welcome-desc', texts.enter_name);
 
-            // Main UI
-            // room-name-display is typically overwritten by dynamic name, but set fallback
-            // document.getElementById('room-name-display').innerText = texts.room_info; 
+            const nameInput = document.getElementById('visitor-name');
+            if (nameInput) nameInput.placeholder = texts.name_placeholder;
 
-            document.getElementById('view-card-text').innerText = texts.view_card;
-            document.getElementById('online-label').innerHTML = `${texts.online} &bull; <span id="visitor-count">1</span> ${texts.visitor}`;
-            document.getElementById('sys-connected').innerText = texts.connected;
-            document.getElementById('typing-text').innerText = texts.typing;
-            document.getElementById('message-input').placeholder = texts.input_placeholder;
+            const enterBtn = document.querySelector('#login-modal button span');
+            if (enterBtn) enterBtn.innerText = texts.enter_btn;
+
+            // Header
+            updateTextById('view-card-text', texts.view_card);
+            updateTextById('leave-btn-text', texts.leave_btn);
+
+            const onlLabel = document.getElementById('online-label');
+            if (onlLabel) onlLabel.innerHTML = `${texts.online} &bull; <span id="visitor-count">1</span> ${texts.visitor}`;
+
+            updateTextById('sys-connected', texts.connected);
+            updateTextById('typing-text', texts.typing);
+
+            const msgInput = document.getElementById('message-input');
+            if (msgInput) msgInput.placeholder = texts.input_placeholder;
+        }
+
+        function updateTextById(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
         }
 
         function appendMessage(sender, text, isMe = false) {
@@ -316,6 +337,24 @@
                 btn.disabled = false;
                 btnText.innerText = texts.enter_btn;
             }
+        }
+
+        async function leaveRoom() {
+            // Confirm? No, just leave usually is better UX for "Exit" button unless misclick sensitive
+            if (!confirm("Are you sure you want to leave?")) return;
+
+            try {
+                // Use beacon for best-effort send on unload, or fetch await
+                await fetch("/leave", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visitor_id: state.visitorId })
+                });
+            } catch (e) { console.error(e); }
+
+            // Clear state?
+            // Actually, usually you just reload to "logout" state
+            location.reload();
         }
 
         async function sendMessage() {

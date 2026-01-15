@@ -38,6 +38,11 @@ class RoomManager:
             "last_seen": time.time()
         }
 
+    def remove_visitor(self, visitor_id: str):
+        """Explicitly removes a visitor."""
+        if visitor_id in self.active_visitors:
+            del self.active_visitors[visitor_id]
+
     def sanitize(self, text: str) -> str:
         """
         Sanitizes input text to prevent XSS/injection.

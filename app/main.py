@@ -174,6 +174,18 @@ async def get_card():
         instance_id=config.instance_id
     )
 
+@app.post("/leave")
+async def leave_room(request: dict):
+    """
+    Endpoint for visitor to explicitly leave the room.
+    Expects {"visitor_id": "..."}
+    """
+    vid = request.get("visitor_id")
+    if vid:
+        room_manager.remove_visitor(vid)
+        print(f"--- Visitor Left: {vid} ---")
+    return {"status": "left"}
+
 @app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
 @app.post("/visit", response_model=VisitResponse, dependencies=[Depends(verify_api_key)])
 async def visit(request: VisitRequest, session: Session = Depends(get_session)):
