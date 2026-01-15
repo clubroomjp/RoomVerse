@@ -1,18 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RoomVerse Dashboard</title>
+    <title>RoomVerse Node</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
         }
 
         .glass {
@@ -20,158 +30,260 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .light .glass {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 
-<body class="min-h-screen p-8">
-    <div class="max-w-4xl mx-auto">
-        <header class="mb-10 flex justify-between items-center">
+<body
+    class="min-h-screen transition-colors duration-300 bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-e2e8f0">
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+
+        <!-- Header & Nav -->
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1
-                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                    RoomVerse Dashboard</h1>
-                <p class="text-slate-400" data-i18n="subtitle">Manage your AI Node</p>
+                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500">
+                    RoomVerse
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm" data-i18n="subtitle">Manage your AI Node</p>
             </div>
+
+            <nav class="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Dashboard
+                </button>
+                <button onclick="switchTab('lobby')" id="tab-lobby"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Lobby
+                </button>
+                <button onclick="switchTab('room')" id="tab-room"
+                    class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    My Room
+                </button>
+            </nav>
+
             <div class="flex items-center space-x-4">
+                <!-- Theme Toggle -->
+                <button id="theme-toggle"
+                    class="p-2 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+                    🌙
+                </button>
+
+                <!-- Lang Select -->
                 <select id="lang-select"
-                    class="bg-slate-800 border border-slate-700 text-sm rounded px-3 py-1 outline-none focus:border-blue-500">
+                    class="bg-slate-200 dark:bg-slate-800 border-none rounded px-3 py-1 text-sm outline-none">
                     <option value="en">English</option>
                     <option value="ja">日本語</option>
                 </select>
+
                 <div id="status-badge"
-                    class="px-4 py-2 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold border border-green-500/30">
+                    class="hidden md:block px-3 py-1 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 text-xs font-semibold border border-green-500/30">
                     Online
                 </div>
             </div>
         </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Character Settings -->
-            <section class="glass rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-semibold mb-4 text-blue-300" data-i18n="char_settings">Character Settings</h2>
-                <form id="config-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="char_name">Character
-                            Name</label>
-                        <input type="text" id="char-name"
-                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+        <main class="relative">
+            <!-- SECTION: Dashboard -->
+            <section id="section-dashboard" class="tab-content grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Character Settings -->
+                <div class="glass rounded-xl p-6 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-600 dark:text-blue-300" data-i18n="char_settings">
+                        Character Settings</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                data-i18n="char_name">Character Name</label>
+                            <input type="text" id="char-name"
+                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                data-i18n="char_persona">Persona</label>
+                            <textarea id="char-persona" rows="3"
+                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                data-i18n="sys_prompt">System Prompt</label>
+                            <textarea id="char-prompt" rows="4"
+                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-slate-300"
-                            data-i18n="char_persona">Persona</label>
-                        <textarea id="char-persona" rows="3"
-                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+
+                <!-- Technical Settings -->
+                <div class="space-y-8">
+                    <div class="glass rounded-xl p-6 shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300"
+                            data-i18n="llm_settings">LLM Settings</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="llm_model">Model Name</label>
+                                <input type="text" id="llm-model"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none text-slate-800 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="llm_url">Base URL</label>
+                                <input type="text" id="llm-url"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none text-slate-800 dark:text-white">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="sys_prompt">System
-                            Prompt</label>
-                        <textarea id="char-prompt" rows="4"
-                            class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+
+                    <div class="glass rounded-xl p-6 shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-yellow-600 dark:text-yellow-300"
+                            data-i18n="trans_settings">Translation</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-300" data-i18n="trans_enable">Enable
+                                    Auto-Translation</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="trans-enabled" class="sr-only peer">
+                                    <div
+                                        class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="trans_target">Target Language</label>
+                                <select id="trans-target"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none text-slate-800 dark:text-white">
+                                    <option value="ja">Japanese (日本語)</option>
+                                    <option value="en">English (英語)</option>
+                                    <option value="zh-CN">Chinese (Simplified)</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                </form>
+
+                    <div class="glass rounded-xl p-6 shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-green-600 dark:text-green-300"
+                            data-i18n="room_settings">Room & Discovery</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="room_name">Room Name</label>
+                                <input type="text" id="room-name"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-slate-800 dark:text-white">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-600 dark:text-slate-300" data-i18n="auto_announce">Auto-Publish
+                                    to Discovery</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="auto-announce" class="sr-only peer">
+                                    <div
+                                        class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500">
+                                    </div>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="discovery_url">Discovery API URL</label>
+                                <input type="text" id="discovery-url"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs text-slate-800 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="save-btn"
+                        class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold shadow-lg transition-transform transform hover:scale-[1.02]"
+                        data-i18n="save_btn">
+                        Save Configuration
+                    </button>
+                </div>
             </section>
 
-            <!-- Technical Settings -->
-            <section class="space-y-8">
-                <div class="glass rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-semibold mb-4 text-purple-300" data-i18n="llm_settings">LLM Settings</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="llm_model">Model
-                                Name</label>
-                            <input type="text" id="llm-model"
-                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="llm_url">Base
-                                URL</label>
-                            <input type="text" id="llm-url"
-                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-purple-500 outline-none">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-semibold mb-4 text-yellow-300" data-i18n="trans_settings">Translation</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300" data-i18n="trans_enable">Enable Auto-Translation</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="trans-enabled" class="sr-only peer">
-                                <div
-                                    class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500">
-                                </div>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="trans_target">Target
-                                Language</label>
-                            <select id="trans-target"
-                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-yellow-500 outline-none">
-                                <option value="ja">Japanese (日本語)</option>
-                                <option value="en">English (英語)</option>
-                                <option value="zh-CN">Chinese (Simplified) (中国語)</option>
-                                <option value="ko">Korean (韓国語)</option>
-                                <option value="fr">French (フランス語)</option>
-                                <option value="de">German (ドイツ語)</option>
-                                <option value="es">Spanish (スペイン語)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Room & Discovery Settings -->
-                <div class="glass rounded-xl p-6 shadow-xl">
-                    <h2 class="text-xl font-semibold mb-4 text-green-300" data-i18n="room_settings">Room & Discovery
-                    </h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300" data-i18n="room_name">Room
-                                Name</label>
-                            <input type="text" id="room-name"
-                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none">
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-300" data-i18n="auto_announce">Auto-Publish to Discovery</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="auto-announce" class="sr-only peer">
-                                <div
-                                    class="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500">
-                                </div>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-300"
-                                data-i18n="discovery_url">Discovery API URL</label>
-                            <input type="text" id="discovery-url" placeholder="https://roomverse-discovery.workers.dev"
-                                class="w-full bg-slate-800 border border-slate-700 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none text-xs">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Active Rooms List -->
-                <div class="glass rounded-xl p-6 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold text-white" data-i18n="active_rooms">Active Rooms</h2>
+            <!-- SECTION: Lobby -->
+            <section id="section-lobby" class="tab-content hidden">
+                <div class="glass rounded-xl p-6 shadow-lg max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 dark:text-white" data-i18n="active_rooms">Active
+                            Rooms</h2>
                         <button id="refresh-rooms"
-                            class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Refresh</button>
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors shadow">
+                            <span data-i18n="refresh">Refresh</span>
+                        </button>
                     </div>
-                    <div id="rooms-list" class="space-y-2 max-h-64 overflow-y-auto">
+
+                    <div id="rooms-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Filled by JS -->
-                        <p class="text-slate-500 text-sm">Loading...</p>
+                        <div class="col-span-full text-center py-10 text-slate-500">
+                            Loading...
+                        </div>
                     </div>
                 </div>
-
-                <button id="save-btn"
-                    class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-bold shadow-lg transition-transform transform hover:scale-[1.02]"
-                    data-i18n="save_btn">
-                    Save Configuration
-                </button>
             </section>
+
+            <!-- SECTION: Room (Chat) -->
+            <section id="section-room" class="tab-content hidden">
+                <div class="glass rounded-xl shadow-2xl h-[80vh] flex flex-col max-w-5xl mx-auto overflow-hidden">
+                    <!-- Room Header -->
+                    <div class="p-4 border-b border-slate-700/50 bg-slate-800/30 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold text-white"><span id="room-display-name">My Room</span></h3>
+                            <p class="text-xs text-slate-400">Visitors: <span id="visitor-count">0</span></p>
+                        </div>
+                        <div class="flex gap-2">
+                            <span
+                                class="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs border border-red-500/20">Live</span>
+                        </div>
+                    </div>
+
+                    <!-- Chat Area -->
+                    <div id="chat-container"
+                        class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-100 dark:bg-slate-900/50">
+                        <!-- Messages go here -->
+                        <div class="flex justify-center my-4">
+                            <span
+                                class="text-xs text-slate-400 bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">System
+                                started</span>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-4 bg-slate-200 dark:bg-slate-800 border-t border-slate-300 dark:border-slate-700">
+                        <form id="host-chat-form" class="flex gap-2">
+                            <input type="text" id="host-input"
+                                class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"
+                                placeholder="Speak as Host..." autocomplete="off">
+                            <button type="submit"
+                                class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">
+                                Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
+    <!-- MAIN SCRIPT -->
     <script>
+        // --- State ---
+        const state = {
+            lang: 'en',
+            theme: 'dark',
+            config: {},
+            lastMessageTimestamp: 0,
+            pollingInterval: null
+        };
+
+        // --- I18n ---
         const i18n = {
             en: {
                 subtitle: "Manage your AI Node",
@@ -190,11 +302,12 @@
                 auto_announce: "Auto-Publish to Discovery",
                 discovery_url: "Discovery API URL",
                 active_rooms: "Active Rooms",
-                connect: "Connect",
                 save_btn: "Save Configuration",
                 saving: "Saving...",
                 saved: "Saved!",
-                error: "Error"
+                error: "Error",
+                refresh: "Refresh",
+                connect: "Connect"
             },
             ja: {
                 subtitle: "AIノード管理",
@@ -213,19 +326,69 @@
                 auto_announce: "ディレクトリに自動公開",
                 discovery_url: "Discovery API URL",
                 active_rooms: "公開中のルーム",
-                connect: "接続",
                 save_btn: "設定を保存",
                 saving: "保存中...",
                 saved: "保存しました！",
-                error: "エラーが発生しました"
+                error: "エラーが発生しました",
+                refresh: "更新",
+                connect: "接続"
             }
         };
 
-        let currentConfig = {};
-        let currentLang = 'en';
+        // --- Tabs ---
+        function switchTab(tabId) {
+            // Update UI
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
 
+            // Update Tab style
+            const activeClass = state.theme === 'dark' ? 'bg-slate-700' : 'bg-white shadow';
+            const inactiveClass = 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300';
+
+            ['dashboard', 'lobby', 'room'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabId) {
+                    btn.className = `px-4 py-2 rounded-md text-sm font-bold transition-transform transform scale-105 shadow ${state.theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-white text-slate-800'}`;
+                } else {
+                    btn.className = `px-4 py-2 rounded-md text-sm font-medium transition-colors text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-700`;
+                }
+            });
+
+            // Logic
+            if (tabId === 'lobby') {
+                fetchRooms();
+            }
+            if (tabId === 'room') {
+                startChatPolling();
+            } else {
+                stopChatPolling();
+            }
+        }
+
+        // --- Theme ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                state.theme = 'light';
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-toggle').innerText = '☀️';
+            } else {
+                html.classList.add('dark');
+                html.classList.remove('light');
+                state.theme = 'dark';
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-toggle').innerText = '🌙';
+            }
+            // Re-apply tab styles
+            const currentTab = ['dashboard', 'lobby', 'room'].find(t => !document.getElementById(`section-${t}`).classList.contains('hidden'));
+            switchTab(currentTab);
+        }
+
+        // --- I18n ---
         function updateTexts(lang) {
-            currentLang = lang;
+            state.lang = lang;
             const texts = i18n[lang];
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
@@ -233,56 +396,44 @@
             });
         }
 
-        document.getElementById('lang-select').addEventListener('change', (e) => {
-            updateTexts(e.target.value);
-        });
-
+        // --- Config Logic ---
         async function loadConfig() {
             try {
                 const res = await fetch('/api/config');
-                currentConfig = await res.json();
+                const config = await res.json();
+                state.config = config;
 
-                // Set Dashboard Language from config
-                if (currentConfig.dashboard && currentConfig.dashboard.language) {
-                    const savedLang = currentConfig.dashboard.language;
-                    document.getElementById('lang-select').value = savedLang;
-                    updateTexts(savedLang);
-                    // currentLang is set by updateTexts
-                } else {
-                    // Default to EN or browser lang if not set
-                    updateTexts('en');
+                // Dashboard Lang
+                if (config.dashboard && config.dashboard.language) {
+                    document.getElementById('lang-select').value = config.dashboard.language;
+                    updateTexts(config.dashboard.language);
                 }
 
-                document.getElementById('char-name').value = currentConfig.character.name;
-                document.getElementById('char-persona').value = currentConfig.character.persona;
-                document.getElementById('char-prompt').value = currentConfig.character.system_prompt;
+                // Fill Forms
+                document.getElementById('char-name').value = config.character.name || "";
+                document.getElementById('char-persona').value = config.character.persona || "";
+                document.getElementById('char-prompt').value = config.character.system_prompt || "";
+                document.getElementById('llm-model').value = config.llm.model || "";
+                document.getElementById('llm-url').value = config.llm.base_url || "";
 
-                document.getElementById('llm-model').value = currentConfig.llm.model;
-                document.getElementById('llm-url').value = currentConfig.llm.base_url;
+                if (config.translation) {
+                    document.getElementById('trans-enabled').checked = config.translation.enabled;
+                    document.getElementById('trans-target').value = config.translation.target_lang || 'ja';
+                }
+                if (config.room) {
+                    document.getElementById('room-name').value = config.room.name || "";
+                    document.getElementById('auto-announce').checked = config.room.auto_announce || false;
+                    document.getElementById('discovery-url').value = config.room.discovery_api_url || "";
 
-                if (currentConfig.translation) {
-                    document.getElementById('trans-enabled').checked = currentConfig.translation.enabled;
-                    document.getElementById('trans-target').value = currentConfig.translation.target_lang || 'ja';
+                    document.getElementById('room-display-name').innerText = config.room.name || "My Room";
                 }
 
-                if (currentConfig.room) {
-                    document.getElementById('room-name').value = currentConfig.room.name || "";
-                    document.getElementById('auto-announce').checked = currentConfig.room.auto_announce || false;
-                    document.getElementById('discovery-url').value = currentConfig.room.discovery_api_url || "";
-                }
-            } catch (e) {
-                console.error("Failed to load config", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function saveConfig() {
-            const btn = document.getElementById('save-btn');
-            const originalText = i18n[currentLang].save_btn;
-            btn.innerText = i18n[currentLang].saving;
-
-            const newConfig = { ...currentConfig };
-
-            // Save Dashboard Language
+            // Gather data...
+            const newConfig = { ...state.config };
             if (!newConfig.dashboard) newConfig.dashboard = {};
             newConfig.dashboard.language = document.getElementById('lang-select').value;
 
@@ -302,67 +453,188 @@
             newConfig.room.auto_announce = document.getElementById('auto-announce').checked;
             newConfig.room.discovery_api_url = document.getElementById('discovery-url').value;
 
+            // Send
+            const btn = document.getElementById('save-btn');
+            btn.innerText = i18n[state.lang].saving;
             try {
                 const res = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newConfig)
                 });
-
                 if (res.ok) {
-                    // Update currentConfig to match what we just saved (including new dashboard settings)
-                    currentConfig = newConfig;
-                    btn.innerText = i18n[currentLang].saved;
-                    setTimeout(() => btn.innerText = i18n[currentLang].save_btn, 2000);
-                } else {
-                    alert(i18n[currentLang].error);
-                    btn.innerText = i18n[currentLang].save_btn;
+                    state.config = newConfig;
+                    btn.innerText = i18n[state.lang].saved;
+                    setTimeout(() => btn.innerText = i18n[state.lang].save_btn, 2000);
+                    document.getElementById('room-display-name').innerText = newConfig.room.name;
                 }
             } catch (e) {
-                console.error("Save error", e);
-                btn.innerText = i18n[currentLang].save_btn;
-                alert(i18n[currentLang].error);
+                btn.innerText = i18n[state.lang].error;
             }
         }
 
-
+        // --- Lobby Logic ---
         async function fetchRooms() {
             const list = document.getElementById('rooms-list');
             try {
-                list.innerHTML = `<p class="text-slate-500 text-sm">Refreshing...</p>`;
+                list.innerHTML = `<p class="col-span-full text-center text-slate-500">Refreshing...</p>`;
                 const res = await fetch('/api/discovery/rooms');
-                if (!res.ok) throw new Error("Failed to fetch");
                 const rooms = await res.json();
 
                 if (rooms.length === 0) {
-                    list.innerHTML = `<p class="text-slate-500 text-sm">No active rooms found.</p>`;
+                    list.innerHTML = `<div class="col-span-full text-center text-slate-500 p-8 glass rounded-xl">No active rooms found.</div>`;
                     return;
                 }
 
                 list.innerHTML = rooms.map(room => `
-                    <div class="bg-slate-800/50 p-3 rounded border border-slate-700 flex justify-between items-center group hover:border-blue-500 transition-colors">
-                        <div>
-                            <div class="font-bold text-sm text-blue-300">${room.name || "Unknown Room"}</div>
-                            <div class="text-xs text-slate-400 truncate w-48">${room.url}</div>
+                    <div class="glass p-4 rounded-xl border border-slate-700/50 hover:border-blue-500 transition-all group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg text-blue-400 mb-1">${room.name || "Unknown Room"}</h3>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">Default Char</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>
+                            </div>
+                            <a href="${room.url}/dashboard" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-sm font-bold shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5">
+                                ${i18n[state.lang].connect}
+                            </a>
                         </div>
-                        <a href="${room.url}" target="_blank" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-xs rounded text-white font-bold transition-colors">
-                            ${i18n[currentLang] ? i18n[currentLang].connect : "Connect"}
-                        </a>
                     </div>
                 `).join('');
             } catch (e) {
-                list.innerHTML = `<p class="text-red-400 text-sm">Failed to load rooms.</p>`;
+                list.innerHTML = `<p class="text-red-400">Failed to load rooms.</p>`;
             }
         }
 
-        document.getElementById('refresh-rooms').addEventListener('click', fetchRooms);
-        document.getElementById('save-btn').addEventListener('click', saveConfig);
+        // --- Room/Chat Logic ---
 
-        // Initial load
-        (async function () {
+        function renderMessage(msg) {
+            const container = document.getElementById('chat-container');
+            const isMe = msg.sender_id === state.config.instance_id || msg.sender_id === 'HOST'; // Assuming host is me
+            // Or strictly, if it is MY character responding.
+            // Actually, we distinguish "Visitor" vs "Host (Me/My AI)".
+            // msg.sender_id checks...
+            // Let's rely on sender name or simple logic for now. 
+            // Better: 'visitor' role vs 'host' role?
+            // The backend logs: sender="visitor" or "host". 
+            // The memory structure has "sender_id".
+
+            // Heuristic for bubble side:
+            const isHost = (msg.sender_name === state.config.character.name) || msg.is_human === true;
+
+            const alignClass = isHost ? 'justify-end' : 'justify-start';
+            const bubbleClass = isHost
+                ? 'bg-blue-600 text-white rounded-br-none'
+                : 'bg-slate-700 text-slate-200 rounded-bl-none';
+
+            const timeStr = new Date(msg.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const html = `
+                <div class="flex ${alignClass} mb-4 anime-fade-in">
+                    <div class="max-w-[70%]">
+                        <div class="flex items-end gap-2 ${isHost ? 'flex-row-reverse' : ''}">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-400 to-gray-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                                ${msg.sender_name[0]}
+                            </div>
+                            <div class="flex flex-col ${isHost ? 'items-end' : 'items-start'}">
+                                <span class="text-xs text-slate-400 mb-1 px-1">${msg.sender_name}</span>
+                                <div class="${bubbleClass} px-4 py-2 rounded-2xl shadow-md text-sm leading-relaxed">
+                                    ${msg.content}
+                                </div>
+                                <span class="text-[10px] text-slate-500 mt-1 px-1">${timeStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            container.appendChild(div.firstElementChild);
+            container.scrollTo(0, container.scrollHeight);
+        }
+
+        async function pollMessages() {
+            try {
+                const url = `/api/room/messages?since=${state.lastMessageTimestamp}`;
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const msgs = await res.json();
+
+                msgs.sort((a, b) => a.timestamp - b.timestamp);
+
+                msgs.forEach(msg => {
+                    if (msg.timestamp > state.lastMessageTimestamp) {
+                        renderMessage(msg);
+                        state.lastMessageTimestamp = msg.timestamp;
+                    }
+                });
+            } catch (e) { console.error("Poll error", e); }
+        }
+
+        function startChatPolling() {
+            if (state.pollingInterval) return;
+            pollMessages(); // Initial fetch
+            state.pollingInterval = setInterval(pollMessages, 3000);
+        }
+
+        function stopChatPolling() {
+            if (state.pollingInterval) {
+                clearInterval(state.pollingInterval);
+                state.pollingInterval = null;
+            }
+        }
+
+        async function sendHostMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('host-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            // Optimistic render? No, let's wait for poll or just append.
+            // Appending optimistically is better UX.
+            // renderMessage({
+            //     sender_name: state.config.character.name + " (You)",
+            //     content: text,
+            //     timestamp: Date.now()/1000,
+            //     is_human: true
+            // });
+
+            try {
+                await fetch('/api/host/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                // Poll will catch it shortly
+                pollMessages();
+            } catch (e) {
+                console.error("Send error", e);
+            }
+        }
+
+        // --- Init ---
+        document.getElementById('lang-select').addEventListener('change', (e) => updateTexts(e.target.value));
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        document.getElementById('save-btn').addEventListener('click', saveConfig);
+        document.getElementById('refresh-rooms').addEventListener('click', fetchRooms);
+        document.getElementById('host-chat-form').addEventListener('submit', sendHostMessage);
+
+        (async function init() {
+            // Restore theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'light') toggleTheme();
+
             await loadConfig();
-            fetchRooms();
+
+            // Initial Tab
+            switchTab('dashboard');
         })();
+
     </script>
 </body>
 

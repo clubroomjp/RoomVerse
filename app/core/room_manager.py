@@ -34,6 +34,7 @@ class RoomManager:
     def add_message(self, sender_id: str, sender_name: str, content: str, is_human: bool = False):
         safe_content = self.sanitize(content)
         self.chat_history.append({
+            "id": str(time.time()), # Simple ID
             "timestamp": time.time(),
             "sender_id": sender_id,
             "sender_name": self.sanitize(sender_name),

@@ -121,6 +121,15 @@ async def update_config(new_config: Config):
         print(f"[ConfigUpdate] Announced presence: {success}")
 
     return {"status": "updated"}
+
+@app.get("/api/room/messages")
+async def get_room_messages(since: float = 0):
+    """
+    Returns chat messages since the given timestamp.
+    """
+    messages = [m for m in room_manager.chat_history if m["timestamp"] > since]
+    return messages
+
 # ------------------
 
 # --- Public Endpoints ---
