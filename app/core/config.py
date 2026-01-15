@@ -14,22 +14,22 @@ class LLMConfig(BaseModel):
     model: str
 
 class NgrokConfig(BaseModel):
-    authtoken: str = None
+    authtoken: str | None = None
 
 class CloudflareConfig(BaseModel):
     enabled: bool = True
-    binary_path: str = None
+    binary_path: str | None = None
     
 class RoomConfig(BaseModel):
     name: str = "My Room"
     description: str = ""
     max_visitors: int = 5
-    discovery_api_url: str = None
+    discovery_api_url: str | None = None
     auto_announce: bool = False
 
 class SecurityConfig(BaseModel):
-    ngrok_basic_auth: str = None
-    api_key: str = None
+    ngrok_basic_auth: str | None = None
+    api_key: str | None = None
 
 class TranslationConfig(BaseModel):
     enabled: bool = False
