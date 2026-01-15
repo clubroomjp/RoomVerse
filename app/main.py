@@ -455,6 +455,29 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
             display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
         
         room_manager.add_message(config.instance_id, config.character.name, room_manager.sanitize(display_response))
+        
+        # --- Log to DB (Visitor & Host) ---
+        # 1. Visitor Translated Message
+        # We use a temp session ID or just timestamp-based grouping later
+        temp_session_id = str(uuid.uuid4()) 
+        
+        log_in = database.ConversationLog(
+            session_id=temp_session_id, 
+            visitor_id=request.visitor_id, 
+            sender="visitor", 
+            message=room_manager.sanitize(display_msg) # Save TRANSLATED (or original if disabled)
+        )
+        session.add(log_in)
+
+        # 2. Host Translated Response
+        log_out = database.ConversationLog(
+            session_id=temp_session_id, 
+            visitor_id=request.visitor_id, 
+            sender="host", 
+            message=room_manager.sanitize(display_response) # Save TRANSLATED
+        )
+        session.add(log_out)
+        session.commit()
     
     return VisitResponse(
         host_name=config.character.name,
@@ -482,11 +505,10 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     # Log incoming message to Room Manager (Sanitized)
     room_manager.add_message(request.visitor_id, visitor_name, room_manager.sanitize(display_msg), model=request.model)
 
-    # Log to DB (Keep original content?) 
-    # Usually DB logs should preserve what was actually said (English). 
+    # Log to DB (Save Translated Content) 
     log_in = ConversationLog(
         session_id=session_id, visitor_id=request.visitor_id, 
-        sender="visitor", message=room_manager.sanitize(visitor_msg_original)
+        sender="visitor", message=room_manager.sanitize(display_msg)
     )
     session.add(log_in)
     
@@ -518,6 +540,19 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         )
     
         # Handle Response Translation for Dashboard AND Client
+        display_response = response_text
+        if config.translation.enabled:
+            display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
+            
+        # Log Host Response to DB (Translated)
+        log_out = ConversationLog(
+            session_id=session_id, 
+            visitor_id=request.visitor_id, 
+            sender="host", 
+            message=room_manager.sanitize(display_response)
+        )
+        session.add(log_out)
+        session.commit()
         display_response = response_text
         if config.translation.enabled:
             display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
