@@ -131,19 +131,20 @@
                         </h2>
 
                         <!-- Detection -->
-                        <div class="mb-4 bg-slate-800/50 p-3 rounded border border-slate-600/50">
-                            <label class="block text-xs font-bold text-slate-400 mb-1">
+                        <div
+                            class="mb-4 bg-slate-100 dark:bg-slate-800/50 p-3 rounded border border-slate-300 dark:border-slate-600/50">
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
                                 <span data-i18n="detected_label">Detected Models</span>
                             </label>
                             <div class="flex gap-2">
                                 <select id="detected-models"
-                                    class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 overflow-hidden text-ellipsis"
+                                    class="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-2 text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 overflow-hidden text-ellipsis"
                                     onchange="applyDetectedModel()">
                                     <option value="" data-i18n="detected_placeholder">Manual Input (Select to auto-fill)
                                     </option>
                                 </select>
                                 <button id="scan-btn" onclick="scanLLMs()"
-                                    class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition-colors border border-slate-600 shrink-0"
+                                    class="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-slate-700 dark:text-slate-300 transition-colors border border-slate-300 dark:border-slate-600 shrink-0"
                                     title="Scan Local Models">
                                     <i class="fas fa-sync-alt"></i>
                                     <span class="hidden" data-i18n="scan_btn">Scan</span>
