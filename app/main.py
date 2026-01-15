@@ -10,6 +10,7 @@ from app.core.database import create_db_and_tables, get_session, log_visit, get_
 
 from contextlib import asynccontextmanager
 from app.core.tunnel import start_tunnel
+from app.core.room_manager import room_manager
 import uuid
 
 @asynccontextmanager
@@ -56,6 +57,9 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     session_id: str
     response: str
+
+class HostChatRequest(BaseModel):
+    message: str
 
 class CharacterCard(BaseModel):
     name: str
@@ -107,17 +111,28 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     """
     visitor_msg = request.message
     
-    # 1. Log Visit & Update Relationship
-    relation = log_visit(session, request.visitor_id, request.visitor_name, request.callback_url)
+    # 1. Capacity Check & Security
+    if not room_manager.can_accept_visitor(request.visitor_id):
+        raise HTTPException(status_code=503, detail="Room is full")
+        
+    # Register & Sanitize
+    room_manager.register_visitor(request.visitor_id, request.visitor_name, request.callback_url)
+    
+    # 2. Log Visit & Update Relationship
+    relation = log_visit(session, request.visitor_id, room_manager.sanitize(request.visitor_name), request.callback_url)
     
     print(f"--- Incoming Visit ---")
     print(f"ID: {request.visitor_id}")
     print(f"Name: {request.visitor_name} (Affinity: {relation.affinity})")
     
-    # 2. Translate if needed
+    # 3. Translate if needed
     if config.translation.enabled:
         visitor_msg = translator.translate(visitor_msg, target_lang=config.translation.target_lang)
     
+    # Sanitize message before processing
+    visitor_msg = room_manager.sanitize(visitor_msg)
+    room_manager.add_message(request.visitor_id, request.visitor_name, visitor_msg)
+
     print(f"Message: {visitor_msg}")
 
     # 3. Generate Response with Relationship Context
@@ -144,10 +159,13 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     """
     session_id = request.session_id or str(uuid.uuid4())
     
-    # Log incoming message
+    # Log incoming message (Sanitized via RoomManager)
+    safe_message = room_manager.sanitize(request.message)
+    room_manager.add_message(request.visitor_id, "visitor", safe_message)
+
     log_in = ConversationLog(
         session_id=session_id, visitor_id=request.visitor_id, 
-        sender="visitor", message=request.message
+        sender="visitor", message=safe_message
     )
     session.add(log_in)
     
@@ -164,10 +182,14 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     # Generate Response
     response_text = llm_client.generate_response(
         visitor_name=visitor_name,
-        message=request.message,
+        message=safe_message,
         context=[], # TODO: Fetch recent history from DB for this session_id?
         relationship_context=rel_context
     )
+    
+    # Sanitize response just in case
+    response_text = room_manager.sanitize(response_text)
+    room_manager.add_message(config.instance_id, config.character.name, response_text)
     
     # Log response
     log_out = ConversationLog(
@@ -178,6 +200,25 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
     session.commit()
     
     return ChatResponse(session_id=session_id, response=response_text)
+
+@app.post("/api/host/chat")
+async def host_chat(request: HostChatRequest, session: Session = Depends(get_session)):
+    """
+    Endpoint for the Host User to send a message to the room.
+    """
+    # Sanitize and add to room manager
+    safe_msg = room_manager.sanitize(request.message)
+    room_manager.add_message("HOST", config.character.name, safe_msg, is_human=True)
+    
+    # Log to DB (Special visitor_id for host?)
+    # For now, we might just log it as a system event or associated with a 'HOST' session
+    # Simpler: just acknowledge. The visitors will need to poll or receive this.
+    # Current architecture is request-response, so visitors won't "receive" this 
+    # unless they are polling or we verify the stream/websocket later.
+    # For now, this just adds to the room log/context.
+    
+    print(f"[HOST]: {safe_msg}")
+    return {"status": "sent", "message": safe_msg}
 
 if __name__ == "__main__":
     import uvicorn

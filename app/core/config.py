@@ -16,6 +16,15 @@ class LLMConfig(BaseModel):
 class NgrokConfig(BaseModel):
     authtoken: str = None
 
+class CloudflareConfig(BaseModel):
+    enabled: bool = True
+    binary_path: str = None
+    
+class RoomConfig(BaseModel):
+    name: str = "My Room"
+    max_visitors: int = 5
+    discovery_api_url: str = None
+
 class SecurityConfig(BaseModel):
     ngrok_basic_auth: str = None
     api_key: str = None
@@ -35,6 +44,8 @@ class Config(BaseModel):
     security: SecurityConfig = None
     translation: TranslationConfig = TranslationConfig()
     dashboard: DashboardConfig = DashboardConfig()
+    cloudflare: CloudflareConfig = CloudflareConfig()
+    room: RoomConfig = RoomConfig()
 
 def load_config(path: str = "app/config.json") -> Config:
     if not os.path.exists(path):
