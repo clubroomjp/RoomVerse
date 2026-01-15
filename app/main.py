@@ -114,8 +114,9 @@ async def update_config(new_config: Config):
         client = get_discovery_client(config)
         metadata = {
             "name": config.room.name,
-            "character": config.character.name,
-            "max_visitors": config.room.max_visitors
+            "description": config.room.description,
+            "max_visitors": config.room.max_visitors,
+            "character": config.character.name
         }
         success = client.announce(config.instance_id, GLOBAL_PUBLIC_URL, metadata)
         print(f"[ConfigUpdate] Announced presence: {success}")

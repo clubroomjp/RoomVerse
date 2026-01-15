@@ -22,6 +22,7 @@ class CloudflareConfig(BaseModel):
     
 class RoomConfig(BaseModel):
     name: str = "My Room"
+    description: str = ""
     max_visitors: int = 5
     discovery_api_url: str = None
     auto_announce: bool = False
