@@ -472,6 +472,36 @@
         }
 
         // --- Config Logic ---
+        async function toggleRoom() {
+            try {
+                const res = await fetch('/api/room/toggle', { method: 'POST' });
+                const data = await res.json();
+                updateRoomStatusUI(data.is_open);
+            } catch (e) { console.error(e); }
+        }
+
+        function updateRoomStatusUI(isOpen) {
+            const statusText = document.getElementById('room-status-text');
+            const toggleBtn = document.getElementById('room-toggle-btn');
+
+            // Cache state
+            state.is_open_cache = isOpen;
+
+            if (isOpen) {
+                statusText.innerText = 'OPEN';
+                statusText.className = 'text-xs text-green-500 font-bold uppercase';
+
+                toggleBtn.innerText = i18n[state.lang].close_room;
+                toggleBtn.className = 'px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+            } else {
+                statusText.innerText = 'CLOSED';
+                statusText.className = 'text-xs text-red-500 font-bold uppercase';
+
+                toggleBtn.innerText = i18n[state.lang].open_room;
+                toggleBtn.className = 'px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
+            }
+        }
+
         async function loadConfig() {
             try {
                 const res = await fetch('/api/config');
