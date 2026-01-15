@@ -5,7 +5,6 @@ requests
 openai
 pyngrok
 deep-translator
-
-
-
 aiohttp
+sqlmodel
+pyinstaller
