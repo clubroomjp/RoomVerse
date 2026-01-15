@@ -289,8 +289,8 @@
                             <p class="text-xs text-slate-200">Visitors: <span id="visitor-count">0</span></p>
                         </div>
                         <div class="flex gap-2">
-                            <span
-                                class="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs border border-red-500/20">Live</span>
+                            <span id="room-live-badge"
+                                class="px-2 py-1 rounded bg-green-500/10 text-green-500 text-xs border border-green-500/20 hidden">LIVE</span>
                         </div>
                     </div>
 
@@ -477,7 +477,8 @@
                 if (texts[key]) el.placeholder = texts[key];
             });
             // Update dynamic elements
-            // updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
+            // Update dynamic elements
+            updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
         }
 
         // --- Config Logic ---
@@ -501,9 +502,13 @@
             const statusText = document.getElementById('room-status-text');
             const toggleBtn = document.getElementById('room-toggle-btn');
             const urlEl = document.getElementById('room-public-url');
+            const liveBadge = document.getElementById('room-live-badge');
 
             // Cache state
             state.is_open_cache = isOpen;
+
+            if (publicUrl) state.public_url_cache = publicUrl;
+            else if (state.public_url_cache) publicUrl = state.public_url_cache;
 
             if (isOpen) {
                 statusText.innerText = 'OPEN';
@@ -517,6 +522,13 @@
                     urlEl.href = publicUrl;
                     urlEl.classList.remove('hidden');
                 }
+
+                // Sync Live Badge
+                if (liveBadge) {
+                    liveBadge.innerText = "LIVE";
+                    liveBadge.className = "px-2 py-1 rounded bg-green-500/10 text-green-500 text-xs border border-green-500/20";
+                    liveBadge.classList.remove('hidden');
+                }
             } else {
                 statusText.innerText = 'CLOSED';
                 statusText.className = 'text-xs text-red-500 font-bold uppercase';
@@ -525,6 +537,12 @@
                 toggleBtn.className = 'px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow transition-transform hover:scale-105';
 
                 urlEl.classList.add('hidden');
+
+                // Sync Live Badge
+                if (liveBadge) {
+                    liveBadge.innerText = "OFFLINE";
+                    liveBadge.className = "px-2 py-1 rounded bg-slate-500/10 text-slate-400 text-xs border border-slate-500/20";
+                }
             }
         }
 
