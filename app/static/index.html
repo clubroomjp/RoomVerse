@@ -97,34 +97,9 @@
         <main class="relative">
             <!-- SECTION: Dashboard -->
             <section id="section-dashboard" class="tab-content grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Character Settings -->
-                <div class="glass rounded-xl p-6 shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4 text-blue-600 dark:text-blue-300" data-i18n="char_settings">
-                        Character Settings</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
-                                data-i18n="char_name">Character Name</label>
-                            <input type="text" id="char-name"
-                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
-                                data-i18n="char_persona">Persona</label>
-                            <textarea id="char-persona" rows="3"
-                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
-                                data-i18n="sys_prompt">System Prompt</label>
-                            <textarea id="char-prompt" rows="4"
-                                class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Technical Settings -->
+                <!-- Left Column -->
                 <div class="space-y-8">
+                    <!-- LLM Settings -->
                     <div class="glass rounded-xl p-6 shadow-lg">
                         <h2 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300"
                             data-i18n="llm_settings">LLM Settings</h2>
@@ -144,6 +119,37 @@
                         </div>
                     </div>
 
+                    <!-- Character Settings -->
+                    <div class="glass rounded-xl p-6 shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4 text-blue-600 dark:text-blue-300"
+                            data-i18n="char_settings">
+                            Character Settings</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="char_name">Character Name</label>
+                                <input type="text" id="char-name"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="char_persona">Persona</label>
+                                <textarea id="char-persona" rows="3"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300"
+                                    data-i18n="sys_prompt">System Prompt</label>
+                                <textarea id="char-prompt" rows="4"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-8">
+                    <!-- Translation -->
                     <div class="glass rounded-xl p-6 shadow-lg">
                         <h2 class="text-xl font-semibold mb-4 text-yellow-600 dark:text-yellow-300"
                             data-i18n="trans_settings">Translation</h2>
@@ -171,6 +177,7 @@
                         </div>
                     </div>
 
+                    <!-- Room & Discovery -->
                     <div class="glass rounded-xl p-6 shadow-lg">
                         <h2 class="text-xl font-semibold mb-4 text-green-600 dark:text-green-300"
                             data-i18n="room_settings">Room & Discovery</h2>
