@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -62,12 +62,18 @@ app = FastAPI(title="RoomVerse Node", version="0.1.0", lifespan=lifespan)
 # Mount static files for Dashboard
 app.mount("/dashboard", StaticFiles(directory="app/static", html=True), name="static")
 
-async def verify_api_key(x_roomverse_key: Annotated[str | None, Header()] = None):
+async def verify_api_key(
+    x_roomverse_key: Annotated[str | None, Header()] = None,
+    key: Annotated[str | None, Query()] = None
+):
     if not config.security or not config.security.api_key:
         return # Open if no key configured
     
-    if x_roomverse_key != config.security.api_key:
-        print(f"Unauthorized access attempt. Key provided: {x_roomverse_key}")
+    # Check Header OR Query Param
+    provided_key = x_roomverse_key or key
+    
+    if provided_key != config.security.api_key:
+        print(f"Unauthorized access attempt. Key provided: {provided_key}")
         raise HTTPException(status_code=403, detail="Invalid API Key")
 
 # --- Models ---

@@ -448,6 +448,29 @@
         </main>
     </div>
 
+    <!-- Password Modal -->
+    <div id="password-modal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center anime-fade-in">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-2xl w-96 transform transition-all scale-100">
+            <h3 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" data-i18n="enter_password">Enter Room
+                Password</h3>
+            <p class="text-sm text-slate-500 mb-4" data-i18n="password_desc">This room is secured. Please enter the API
+                Key.</p>
+            <input type="password" id="modal-password-input"
+                class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded p-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                placeholder="API Key / Password">
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closePasswordModal()"
+                    class="px-4 py-2 rounded text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                    data-i18n="cancel">Cancel</button>
+                <button onclick="submitPassword()"
+                    class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-lg"
+                    data-i18n="submit">Submit</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN SCRIPT -->
     <script src="js/dashboard.js"></script>
 </body>

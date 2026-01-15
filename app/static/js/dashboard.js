@@ -492,12 +492,20 @@ async function fetchRooms() {
                         <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
                         <p class="text-xs text-slate-500 font-mono truncate w-64">${room.url}</p>
                     <div class="mt-4 flex justify-end gap-2">
-                        <button onclick="sendAgent('${room.url}')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
-                            <i class="fas fa-robot mr-1"></i> ${i18n[state.lang].send_agent_btn}
-                        </button>
-                        <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
-                            ${i18n[state.lang].connect_btn}
-                        </a>
+                        ${room.metadata?.locked
+                ? `<button onclick="openPasswordModal('agent', '${room.url}')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                <i class="fas fa-robot mr-1"></i> ${i18n[state.lang].send_agent_btn}
+                               </button>
+                               <button onclick="openPasswordModal('connect', '${room.url}')" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                <i class="fas fa-key mr-1"></i> ${i18n[state.lang].connect_btn}
+                               </button>`
+                : `<button onclick="sendAgent('${room.url}')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                <i class="fas fa-robot mr-1"></i> ${i18n[state.lang].send_agent_btn}
+                               </button>
+                               <a href="${room.url}" target="_blank" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-bold shadow transition-transform hover:scale-105 whitespace-nowrap text-sm">
+                                ${i18n[state.lang].connect_btn}
+                               </a>`
+            }
                     </div>
             </div>
         `).join('');
@@ -638,6 +646,43 @@ async function sendAgent(url) {
     } catch (e) {
         console.error(e);
         alert(texts.agent_fail);
+    }
+}
+
+
+// --- Password Modal Logic ---
+let passwordModalContext = { action: null, url: null };
+
+function openPasswordModal(action, url) {
+    passwordModalContext = { action, url };
+    document.getElementById('modal-password-input').value = '';
+    document.getElementById('password-modal').classList.remove('hidden');
+    document.getElementById('modal-password-input').focus();
+}
+
+function closePasswordModal() {
+    document.getElementById('password-modal').classList.add('hidden');
+    passwordModalContext = { action: null, url: null };
+}
+
+function submitPassword() {
+    const pwd = document.getElementById('modal-password-input').value.trim();
+    if (!pwd) return;
+
+    const { action, url } = passwordModalContext;
+    if (!action || !url) return;
+
+    // Append key param
+    // Check if url already has params
+    const separator = url.includes('?') ? '&' : '?';
+    const finalUrl = `${url}${separator}key=${encodeURIComponent(pwd)}`;
+
+    closePasswordModal();
+
+    if (action === 'connect') {
+        window.open(finalUrl, '_blank');
+    } else if (action === 'agent') {
+        sendAgent(finalUrl);
     }
 }
 
