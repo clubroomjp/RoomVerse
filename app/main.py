@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Annotated
@@ -100,7 +101,7 @@ class CharacterCard(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"status": "online", "character": config.character.name}
+    return FileResponse('app/static/visitor.html')
 
 
 
