@@ -47,18 +47,18 @@
     <!-- LOGIN MODAL -->
     <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
         <div class="glass p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center anime-fade-in">
-            <h1
+            <h1 id="welcome-title"
                 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                 Welcome, Traveler
             </h1>
-            <p class="text-slate-400 mb-6">Enter your name to visit this room.</p>
+            <p id="welcome-desc" class="text-slate-400 mb-6">Enter your name to visit this room.</p>
 
             <input type="text" id="visitor-name" placeholder="Your Name..."
                 class="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none mb-4 transition-all">
 
             <button onclick="enterRoom()"
                 class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold shadow-lg transition-transform transform hover:scale-[1.02]">
-                Enter Room
+                <span id="enter-btn-text">Enter Room</span>
             </button>
             <p id="error-msg" class="text-red-400 text-sm mt-3 hidden"></p>
         </div>
@@ -73,12 +73,14 @@
                 <h2 class="text-lg font-bold text-white tracking-wide" id="room-name-display">Room Information</h2>
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <p class="text-xs text-slate-400">Online &bull; <span id="visitor-count">1</span> Visitor(s)</p>
+                    <p class="text-xs text-slate-400">
+                        <span id="online-label">Online</span>
+                    </p>
                 </div>
             </div>
             <button onclick="viewCard()"
                 class="text-xs text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
-                View Card
+                <span id="view-card-text">View Card</span>
             </button>
         </div>
 
@@ -86,7 +88,7 @@
         <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
             <!-- Messages will appear here -->
             <div class="flex justify-center my-4 opacity-50">
-                <span
+                <span id="sys-connected"
                     class="text-xs text-slate-500 bg-slate-900/50 px-3 py-1 rounded-full border border-slate-800">Connection
                     Established</span>
             </div>
@@ -94,7 +96,7 @@
 
         <!-- TYPING INDICATOR (Hidden by default) -->
         <div id="typing-indicator" class="px-6 py-2 hidden">
-            <span class="text-xs text-slate-500 animate-pulse">Host is typing...</span>
+            <span id="typing-text" class="text-xs text-slate-500 animate-pulse">Host is typing...</span>
         </div>
 
         <!-- INPUT AREA -->
@@ -123,7 +125,44 @@
             visitorName: localStorage.getItem('visitor_name') || "",
             sessionId: null,
             pollInterval: null,
-            charName: "Host"
+            charName: "Host", // Fallback
+            lang: "en"
+        };
+
+        // I18n Data
+        const i18n = {
+            en: {
+                welcome_title: "Welcome, Traveler",
+                enter_name: "Enter your name to visit this room.",
+                name_placeholder: "Your Name...",
+                enter_btn: "Enter Room",
+                room_info: "Room Information",
+                view_card: "View Card",
+                online: "Online",
+                visitor: "Visitor",
+                connected: "Connection Established",
+                typing: "Host is typing...",
+                input_placeholder: "Type a message...",
+                error_name: "Please enter your name.",
+                error_closed: "Failed to enter. The room might be CLOSED.",
+                entering: "Entering..."
+            },
+            ja: {
+                welcome_title: "ようこそ、旅人よ",
+                enter_name: "入室するには名前を入力してください。",
+                name_placeholder: "あなたの名前...",
+                enter_btn: "入室する",
+                room_info: "ルーム情報",
+                view_card: "カードを見る",
+                online: "オンライン",
+                visitor: "人",
+                connected: "接続が確立されました",
+                typing: "ホストが入力中...",
+                input_placeholder: "メッセージを入力...",
+                error_name: "名前を入力してください。",
+                error_closed: "入室に失敗しました。ルームが閉じている可能性があります。",
+                entering: "入室中..."
+            }
         };
 
         // Save ID immediately
@@ -135,7 +174,57 @@
             document.getElementById('visitor-name').value = state.visitorName;
         }
 
+        // Fetch Config & Init
+        initPage();
+
         // --- Functions ---
+
+        async function initPage() {
+            try {
+                // Fetch Config
+                const res = await fetch('/api/config');
+                const config = await res.json();
+
+                // Apply Lang
+                if (config.dashboard && config.dashboard.language) {
+                    state.lang = config.dashboard.language;
+                }
+
+                // Update Static Texts
+                updateTexts();
+
+                // Apply Names
+                if (config.room && config.room.name) {
+                    document.getElementById('room-name-display').innerText = config.room.name;
+                    document.title = config.room.name;
+                }
+                if (config.character && config.character.name) {
+                    state.charName = config.character.name;
+                }
+            } catch (e) {
+                console.error("Failed to load config", e);
+            }
+        }
+
+        function updateTexts() {
+            const texts = i18n[state.lang] || i18n.en;
+
+            // Login Modal
+            document.getElementById('welcome-title').innerText = texts.welcome_title;
+            document.getElementById('welcome-desc').innerText = texts.enter_name;
+            document.getElementById('visitor-name').placeholder = texts.name_placeholder;
+            document.querySelector('#login-modal button span').innerText = texts.enter_btn;
+
+            // Main UI
+            // room-name-display is typically overwritten by dynamic name, but set fallback
+            // document.getElementById('room-name-display').innerText = texts.room_info; 
+
+            document.getElementById('view-card-text').innerText = texts.view_card;
+            document.getElementById('online-label').innerHTML = `${texts.online} &bull; <span id="visitor-count">1</span> ${texts.visitor}`;
+            document.getElementById('sys-connected').innerText = texts.connected;
+            document.getElementById('typing-text').innerText = texts.typing;
+            document.getElementById('message-input').placeholder = texts.input_placeholder;
+        }
 
         function appendMessage(sender, text, isMe = false) {
             const container = document.getElementById('chat-container');
@@ -161,18 +250,20 @@
         async function enterRoom() {
             const nameInput = document.getElementById('visitor-name');
             const name = nameInput.value.trim();
+            const btnText = document.getElementById('enter-btn-text');
             const btn = document.querySelector('#login-modal button');
             const err = document.getElementById('error-msg');
+            const texts = i18n[state.lang] || i18n.en;
 
             if (!name) {
-                err.innerText = "Please enter your name.";
+                err.innerText = texts.error_name;
                 err.classList.remove('hidden');
                 return;
             }
 
             // Disable UI
             btn.disabled = true;
-            btn.innerText = "Entering...";
+            btnText.innerText = texts.entering;
             err.classList.add('hidden');
 
             try {
@@ -180,7 +271,7 @@
                 const payload = {
                     visitor_id: state.visitorId,
                     visitor_name: name,
-                    message: "User connected via Web UI" // Hidden initial trigger
+                    message: "User connected via Web UI"
                 };
 
                 const res = await fetch('/visit', {
@@ -189,13 +280,17 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!res.ok) throw new Error("Failed to enter room. Only open rooms accept visitors.");
+                if (!res.ok) throw new Error(texts.error_closed);
 
                 const data = await res.json();
 
                 // Success
                 state.visitorName = name;
                 state.sessionId = data.session_id;
+
+                // Update Host Name from server response
+                if (data.host_name) state.charName = data.host_name;
+
                 localStorage.setItem('visitor_name', name);
 
                 // Transition UI
@@ -204,27 +299,22 @@
                 document.getElementById('main-interface').classList.add('anime-fade-in');
 
                 // Initial Response logic
-                // The /visit endpoint returns the greeting response.
                 if (data.response) {
                     appendMessage(state.charName, data.response, false);
                 }
 
-                // Get Room Info for header
-                fetchCard();
-
-                // Poll for updates (simple polling for now)
-                // Actually, since this is a simple Req-Res flow, we only need to poll if we want to see OTHER visitors' messages?
-                // The user requested "Chat". 
-                // For a proper chat, we should see what the host says.
-                // But wait, /visit returns the immediate response.
-                // Subsequent messages use /chat.
+                // Explicitly re-apply title to header if available
+                const nameDisplay = document.getElementById('room-name-display');
+                if (document.title && document.title !== "Room Visitor") {
+                    nameDisplay.innerText = document.title;
+                }
 
             } catch (e) {
                 console.error(e);
-                err.innerText = e.message || "Connection failed.";
+                err.innerText = e.message || texts.error_closed;
                 err.classList.remove('hidden');
                 btn.disabled = false;
-                btn.innerText = "Enter Room";
+                btnText.innerText = texts.enter_btn;
             }
         }
 
@@ -268,13 +358,8 @@
             }
         }
 
-        async function fetchCard() {
-            try {
-                const res = await fetch('/card');
-                const card = await res.json();
-                state.charName = card.name;
-                document.getElementById('room-name-display').innerText = `Room of ${card.name}`;
-            } catch (e) { }
+        async function viewCard() {
+            window.open('/card', '_blank');
         }
     </script>
 </body>

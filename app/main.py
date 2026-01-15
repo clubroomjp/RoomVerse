@@ -208,7 +208,12 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     print(f"Message (Original): {visitor_msg_original}")
 
     # 4. Generate Response with Relationship Context
-    # Use Original Message for LLM (English conversation)
+    
+    # Translate Input for LLM if enabled (Human -> English)
+    llm_input_msg = visitor_msg_original
+    if config.translation.enabled:
+        llm_input_msg = translator.translate(visitor_msg_original, target_lang="en")
+
     rel_context = f"Affinity Score: {relation.affinity}\n"
     if relation.memory_summary:
         rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
@@ -221,12 +226,12 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
 
         response_text = llm_client.generate_response(
             visitor_name=request.visitor_name,
-            message=visitor_msg_original, 
+            message=llm_input_msg, 
             context=request.context,
             relationship_context=rel_context
         )
     
-        # 5. Handle Response Translation for Dashboard
+        # 5. Handle Response Translation for Dashboard AND Client
         display_response = response_text
         if config.translation.enabled:
             display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
@@ -235,7 +240,7 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
     
     return VisitResponse(
         host_name=config.character.name,
-        response=response_text # Return original English response
+        response=display_response # Return TRANSLATED response
     )
 
 @app.post("/chat", response_model=ChatResponse, dependencies=[Depends(verify_api_key)])
@@ -273,6 +278,11 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
          if relation.memory_summary:
             rel_context += f"Memory of past interactions: {relation.memory_summary}\n"
 
+    # Translate Input for LLM if enabled (Human -> English)
+    llm_input_msg = visitor_msg_original
+    if config.translation.enabled:
+        llm_input_msg = translator.translate(visitor_msg_original, target_lang="en")
+
     async with room_manager.processing_lock:
         visitor_count = room_manager.get_active_visitor_count()
         scene_context = ""
@@ -284,12 +294,12 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         # Generate Response (English Logic)
         response_text = llm_client.generate_response(
             visitor_name=visitor_name,
-            message=visitor_msg_original,
+            message=llm_input_msg,
             context=[], 
             relationship_context=rel_context
         )
     
-        # Handle Response Translation for Dashboard
+        # Handle Response Translation for Dashboard AND Client
         display_response = response_text
         if config.translation.enabled:
             display_response = translator.translate(response_text, target_lang=config.translation.target_lang)
@@ -304,7 +314,7 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
         session.add(log_out)
         session.commit()
     
-    return ChatResponse(session_id=session_id, response=response_text)
+    return ChatResponse(session_id=session_id, response=display_response)
 
 @app.post("/api/room/toggle")
 async def toggle_room(data: dict = None):
