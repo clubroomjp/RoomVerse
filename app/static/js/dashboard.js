@@ -125,7 +125,7 @@ const i18n = {
         security_header: "セキュリティ",
         api_key_label: "APIキー (任意)",
         api_key_placeholder: "認証待ち...",
-        tab_dashboard: "ダッシュボード",
+        tab_dashboard: "設定",
         tab_lobby: "ロビー",
         tab_room: "マイルーム",
         capacity: "人数",
