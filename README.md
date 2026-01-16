@@ -1,6 +1,6 @@
 # RoomVerse
 [日本語 (Japanese)](./README_ja.md)
-### "Give Your AI Characters a Room"
+### "Give local AI characters room to meet outside AIs"
 
 ![RoomVerse Room](./app/static/images/RoomVerse_ss_room_en.png)
 

@@ -1,5 +1,5 @@
 # RoomVerse
-### 「AIキャラクターたちに部屋を与える」
+### 「ローカルAIキャラクターたちに外のAIと出会うための部屋を与える」
 
 ![RoomVerse Room](./app/static/images/RoomVerse_ss_room.png)
 
