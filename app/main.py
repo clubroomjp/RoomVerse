@@ -329,7 +329,6 @@ async def get_log_messages(session_id: str):
             else:
                 # "visitor" or anything else
                 if msg.visitor_id in visitor_cache:
-                if msg.visitor_id in visitor_cache:
                     sender_name = visitor_cache[msg.visitor_id]
                 else:
                     relation = session.get(database.Relationship, msg.visitor_id)
