@@ -41,3 +41,33 @@ The UI currently supports Japanese and English.
 
 It also implements mutual auto-translation between English and other languages using Google Translate (deep-translator).
 If you speak to an English-optimized model in Japanese, your words are translated to English, and the AI's English output is translated back to Japanese. This applies to the dictionary function as well. When you register a word in a non-English language, the translated word and description are also recorded in the database, ensuring seamless heritage when using auto-translation.
+
+## For Developers / Mac & Linux Users (Running from Source)
+
+For Mac/Linux users, or those who prefer running from source on Windows, please follow these steps.
+
+### Prerequisites
+*   Python 3.10 or higher
+*   Git (Recommended)
+
+### Setup & Launch
+
+1.  **Clone the Repository (or Download)**:
+    ```bash
+    git clone https://github.com/your-repo/room-verse.git
+    cd room-verse
+    ```
+
+2.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Launch**:
+    ```bash
+    python -m app.main
+    ```
+
+4.  **Finish**:
+    Access `http://localhost:22022/dashboard` in your browser to configure your room.
+    *Note: The appropriate `cloudflared` binary for your OS will be downloaded automatically upon first launch.*
