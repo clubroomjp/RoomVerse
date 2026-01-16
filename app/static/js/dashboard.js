@@ -107,6 +107,13 @@ const i18n = {
         lore_select_hint: "Select an entry to view/edit",
         delete: "Delete",
         save_btn: "Save",
+        lore_rename_confirm: "Renaming entry from '{old}' to '{new}'. This will delete the old entry. Continue?",
+        lore_import_confirm: "Import {n} entries to new book '{book}'?",
+        lore_import_success: "Imported {n} entries into '{book}'.",
+        lore_rename_success: "Renamed {n} entries.",
+        lore_no_entries: "No entries found in JSON.",
+        lore_rename_fail: "Rename failed.",
+        keyword_required: "Keyword is required",
 
         // Character Card
         character_card: "Card",
@@ -239,6 +246,13 @@ const i18n = {
         lore_select_hint: "エントリを選択または作成してください",
         delete: "削除",
         save_btn: "保存",
+        lore_rename_confirm: "エントリー名を '{old}' から '{new}' に変更しようとしています。\n古いエントリーは削除され、新しい名前で保存されますがよろしいですか？",
+        lore_import_confirm: "{n} 件のエントリーを新しい辞書 '{book}' にインポートしますか？",
+        lore_import_success: "'{book}' に {n} 件のエントリーをインポートしました。",
+        lore_rename_success: "{n} 件のエントリー名を変更しました。",
+        lore_no_entries: "JSONにエントリーが見つかりません。",
+        lore_rename_fail: "名前の変更に失敗しました。",
+        keyword_required: "キーワードは必須です",
 
         // Character Card
         character_card: "カード",
@@ -345,12 +359,13 @@ function toggleTheme() {
 
 // --- Lorebook Import/Rename ---
 function renameLorebook() {
+    const texts = i18n[state.lang];
     const current = document.getElementById('lorebook-select').value;
     if (!current || current === "Default") {
-        alert("Cannot rename 'Default' or no selection.");
+        alert(texts.lore_rename_fail); // Using fail message for "cannot rename default"
         return;
     }
-    const newName = prompt("Enter new name for: " + current, current);
+    const newName = prompt(texts.lore_rename_confirm.replace('{old}', current).replace('{new}', current), current); // Prompt for new name
     if (!newName || newName === current) return;
 
     fetch(`/api/lore/books/${encodeURIComponent(current)}?new_name=${encodeURIComponent(newName)}`, {
@@ -359,11 +374,11 @@ function renameLorebook() {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'renamed') {
-                alert(`Renamed ${data.count} entries.`);
+                alert(texts.lore_rename_success.replace('{n}', data.count));
                 loreState.currentBook = newName; // Prepare to re-select
                 loadLorebookBooks();
             } else {
-                alert("Rename failed.");
+                alert(texts.lore_rename_fail);
             }
         })
         .catch(e => console.error(e));
@@ -374,6 +389,7 @@ function importLorebook() {
 }
 
 function handleLorefileSelect(event) {
+    const texts = i18n[state.lang];
     const file = event.target.files[0];
     if (!file) return;
 
@@ -397,19 +413,19 @@ function handleLorefileSelect(event) {
             }
 
             if (!entries.length) {
-                alert("No entries found in JSON.");
+                alert(texts.lore_no_entries);
                 return;
             }
 
-            if (!confirm(`Import ${entries.length} entries to new book '${bookName}'?`)) return;
+            if (!confirm(texts.lore_import_confirm.replace('{n}', entries.length).replace('{book}', bookName))) return;
 
             let successCount = 0;
-            // Batch process? Or simple loop. Loop is fine for <100 entries. 
+            // Batch process? Or simple loop. Loop is fine for <100 entries.
             // For larger, chunking would be better, but keep simple.
             // Using saveLoreEntryV2 logic but direct API call
             for (const entry of entries) {
                 // Map ST fields to Our fields
-                /* 
+                /*
                    ST: key, keysecondary, content, constant, enabled, comment
                 */
                 // Handle different key naming
@@ -442,7 +458,7 @@ function handleLorefileSelect(event) {
                 successCount++;
             }
 
-            alert(`Imported ${successCount} entries into '${bookName}'.`);
+            alert(texts.lore_import_success.replace('{n}', successCount).replace('{book}', bookName));
             loreState.currentBook = bookName;
             loadLorebookBooks();
 
@@ -1124,8 +1140,9 @@ function openLoreEntryEditor(keyword) {
 }
 
 async function saveLoreEntryV2() {
+    const texts = i18n[state.lang];
     const keyword = document.getElementById('lore-edit-keyword').value.trim();
-    if (!keyword) return alert("Keyword is required");
+    if (!keyword) return alert(texts.keyword_required);
 
     const entry = {
         keyword: keyword,
@@ -1138,7 +1155,8 @@ async function saveLoreEntryV2() {
 
     // Check for Rename (PK change)
     if (loreState.editingEntry && loreState.editingEntry.keyword !== keyword) {
-        if (confirm(`Renaming entry from '${loreState.editingEntry.keyword}' to '${keyword}'. This will delete the old entry. Continue?`)) {
+        const msg = texts.lore_rename_confirm.replace('{old}', loreState.editingEntry.keyword).replace('{new}', keyword);
+        if (confirm(msg)) {
             try {
                 // Delete old entry
                 await fetch(`/api/lore/${encodeURIComponent(loreState.editingEntry.keyword)}`, { method: 'DELETE' });
