@@ -465,6 +465,24 @@ async def save_lore_entry(entry: LoreEntryRequest):
         session.commit()
     return {"status": "saved", "keyword": entry.keyword}
 
+@app.put("/api/lore/books/{old_name}")
+async def rename_lorebook(old_name: str, new_name: str):
+    """Rename a lorebook (update 'book' field for all entries)."""
+    with get_session_wrapper() as session:
+        # sqlmodel update not supported directly? Use statement
+        from sqlmodel import select
+        statement = select(LoreEntry).where(LoreEntry.book == old_name)
+        entries = session.exec(statement).all()
+        
+        count = 0
+        for entry in entries:
+            entry.book = new_name
+            session.add(entry)
+            count += 1
+        
+        session.commit()
+    return {"status": "renamed", "count": count, "old_name": old_name, "new_name": new_name}
+
 # --- Character Card API ---
 
 class CardCreate(BaseModel):

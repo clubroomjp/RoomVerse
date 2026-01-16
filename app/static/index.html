@@ -549,6 +549,18 @@
                     <button onclick="createNewLorebook()" title="New Book" class="text-slate-500 hover:text-blue-500">
                         <i class="fas fa-plus-circle"></i>
                     </button>
+                    <!-- Rename Button -->
+                    <button onclick="renameLorebook()" title="Rename Book"
+                        class="text-slate-500 hover:text-green-500 ml-1">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <!-- Import Button -->
+                    <button onclick="importLorebook()" title="Import JSON"
+                        class="text-slate-500 hover:text-purple-500 ml-1">
+                        <i class="fas fa-file-import"></i>
+                    </button>
+                    <input type="file" id="lore-import-file" class="hidden" accept=".json"
+                        onchange="handleLorefileSelect(event)">
                     <!-- Active Book Switch -->
                     <div class="flex items-center gap-2 ml-4">
                         <label class="text-xs text-slate-500" data-i18n="lore_active_label">Active:</label>

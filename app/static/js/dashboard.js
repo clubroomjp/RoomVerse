@@ -342,13 +342,138 @@ function toggleTheme() {
 }
 
 // --- Exports ---
-window.state = state;
+
+// --- Lorebook Import/Rename ---
+function renameLorebook() {
+    const current = document.getElementById('lorebook-select').value;
+    if (!current || current === "Default") {
+        alert("Cannot rename 'Default' or no selection.");
+        return;
+    }
+    const newName = prompt("Enter new name for: " + current, current);
+    if (!newName || newName === current) return;
+
+    fetch(`/api/lore/books/${encodeURIComponent(current)}?new_name=${encodeURIComponent(newName)}`, {
+        method: 'PUT'
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'renamed') {
+                alert(`Renamed ${data.count} entries.`);
+                loreState.currentBook = newName; // Prepare to re-select
+                loadLorebookBooks();
+            } else {
+                alert("Rename failed.");
+            }
+        })
+        .catch(e => console.error(e));
+}
+
+function importLorebook() {
+    document.getElementById('lore-import-file').click();
+}
+
+function handleLorefileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const json = JSON.parse(e.target.result);
+            const bookName = file.name.replace(/\.[^/.]+$/, "") || "Imported";
+
+            // Standardize format: ST exports usually have 'entries' (V2/V3) or 'data' (V1)
+            let entries = [];
+            if (Array.isArray(json)) {
+                entries = json;
+            } else if (json.entries) {
+                // V2/V3: entries is dict or list
+                if (Array.isArray(json.entries)) entries = json.entries;
+                else entries = Object.values(json.entries);
+            } else if (json.data) {
+                // V1
+                entries = Object.values(json.data);
+            }
+
+            if (!entries.length) {
+                alert("No entries found in JSON.");
+                return;
+            }
+
+            if (!confirm(`Import ${entries.length} entries to new book '${bookName}'?`)) return;
+
+            let successCount = 0;
+            // Batch process? Or simple loop. Loop is fine for <100 entries. 
+            // For larger, chunking would be better, but keep simple.
+            // Using saveLoreEntryV2 logic but direct API call
+            for (const entry of entries) {
+                // Map ST fields to Our fields
+                /* 
+                   ST: key, keysecondary, content, constant, enabled, comment
+                */
+                // Handle different key naming
+                let keys = entry.keys || entry.key || entry.uid || "entry_" + Math.random().toString(36).substr(2, 5);
+                // keys might be array in ST V3?
+                if (Array.isArray(keys)) keys = keys[0]; // take first as PK
+
+                // extract secondary
+                let secondary = entry.secondary_keys || entry.keysecondary || "";
+                if (Array.isArray(secondary)) secondary = secondary.join(",");
+
+                const payload = {
+                    keyword: String(keys).trim(),
+                    content: entry.content || "",
+                    book: bookName,
+                    secondary_keys: String(secondary),
+                    constant: entry.constant === true || entry.constant === "true",
+                    enabled: entry.enabled !== false, // Default true
+                    keyword_en: null, // Let server translate
+                    content_en: null
+                };
+
+                if (!payload.keyword) continue;
+
+                await fetch('/api/lore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                successCount++;
+            }
+
+            alert(`Imported ${successCount} entries into '${bookName}'.`);
+            loreState.currentBook = bookName;
+            loadLorebookBooks();
+
+        } catch (ex) {
+            console.error(ex);
+            alert("Error parsing JSON: " + ex.message);
+        }
+        // Reset input
+        event.target.value = "";
+    };
+    reader.readAsText(file);
+}
+
+// --- Exports ---
+window.renameLorebook = renameLorebook;
+window.importLorebook = importLorebook;
+window.handleLorefileSelect = handleLorefileSelect;
+window.state = state; // Re-export just in case
 window.i18n = i18n;
 window.updateTexts = updateTexts;
 window.switchTab = switchTab;
 window.toggleTheme = toggleTheme;
-
-// --- Init ---
+window.openLorebookManager = openLorebookManager;
+window.closeLorebookManager = closeLorebookManager;
+window.loadLorebookEntries = loadLorebookEntries;
+window.openLoreEntryEditor = openLoreEntryEditor;
+window.saveLoreEntryV2 = saveLoreEntryV2;
+window.deleteLoreEntry = deleteLoreEntry;
+window.createNewLorebook = createNewLorebook;
+window.setActiveLorebook = setActiveLorebook;
+// End of file
 document.addEventListener('DOMContentLoaded', () => {
     loadConfig();
 
@@ -696,8 +821,8 @@ async function fetchRooms() {
                             ${room.name || "Unknown Room"}
                         </h3>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${i18n[state.lang].capacity}: ${room.metadata?.max_visitors || "?"}</span>
-                            <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-300">${room.metadata?.character || "Standard AI"}</span>
+                            <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-200">${i18n[state.lang].capacity}: ${room.metadata?.max_visitors || "?"}</span>
+                            <span class="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-200">${room.metadata?.character || "Standard AI"}</span>
                             ${room.metadata?.model ? `<span class="text-xs bg-purple-900/50 border border-purple-500/30 px-2 py-0.5 rounded text-purple-100 font-mono">${room.metadata.model}</span>` : ''}
                         </div>
                         <p class="text-sm text-slate-400 mb-2 line-clamp-2 h-10">${room.metadata?.description || "No description provided."}</p>
