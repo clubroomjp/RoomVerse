@@ -973,33 +973,21 @@ def process_host_reply(message: str):
     Background task to generate AI response for Host.
     """
     try:
+        # Import dependencies here if needed or ensure global
+        from app.core.translator import translator
+        from app.core.database import log_visit
+        
         # 1. Build Context from Room History (Last 10 messages)
-        # We need to filter for LLM format
         recent_history = room_manager.chat_history[-10:] 
         llm_context = []
         for msg in recent_history:
-            # Skip the message we just added (the host message is already in history? Yes)
-            # Actually, `generate_response` takes `message` as the current user prompt.
-            # So context should be PREVIOUS messages.
-            # But the host message IS the trigger.
-            # Let's just exclude the very last one if it matches our message ID/timestamp?
-            # Or simpler: passing `context` to `generate_response` just appends it before the last user message.
-            
             role = "user" if msg["is_human"] or msg["sender_id"] != config.instance_id else "assistant"
-            # If msg is the one we just sent...
-            # The `generate_response` logic:
-            # messages.extend(context)
-            # messages.append({"role": "user", "content": message})
-            
-            # If the last message in chat_history IS `message` (the user input),
-            # we should NOT include it in `context` to avoid duplication.
-            
+            # Skip duplications
             if msg["content"] == message and msg["sender_name"] == "Host":
-                continue # Skip the current message from context
-            
+                continue 
             llm_context.append({"role": role, "content": msg["content"]})
 
-        # 2. Generate
+        # 2. Generate Response
         reply = llm_client.generate_response(
             visitor_name="Host",
             message=message,
@@ -1007,9 +995,25 @@ def process_host_reply(message: str):
             relationship_context="You are speaking with the Host (Owner) of this room."
         )
         
-        # 3. Post
-        room_manager.add_message(config.instance_id, config.character.name, reply, model=config.llm.model)
+        # 3. Translate if enabled
+        final_reply = reply
+        if config.translation and config.translation.enabled:
+             # Just translate the output for now as per user request (Auto-translation ON -> Japanese)
+             target = config.translation.target_lang or "ja"
+             final_reply = translator.translate(reply, target)
         
+        # 4. Post to Room (Ephemerally)
+        room_manager.add_message(config.instance_id, config.character.name, final_reply, model=config.llm.model)
+        
+        # 5. Log to DB (Persist)
+        # We need to log both the Host's trigger message and the AI's reply
+        # Using a special session ID "HOST_SESSION"
+        with get_session_wrapper() as session:
+             # Log Host Message
+             log_visit(session, "HOST_SESSION", "Host", "HOST_URL", message, "host")
+             # Log AI Reply
+             log_visit(session, "HOST_SESSION", "Host", "HOST_URL", final_reply, "ai", model=config.llm.model)
+             
     except Exception as e:
         print(f"Error in process_host_reply: {e}")
 

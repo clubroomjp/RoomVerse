@@ -709,8 +709,8 @@ function renderMessage(msg) {
     // The backend logs: sender="visitor" or "host". 
     // The memory structure has "sender_id".
 
-    // Heuristic for bubble side:
-    const isHost = (msg.sender_name === state.config.character.name) || msg.is_human === true;
+    // Valid "Me" check: explicitly HOST or generic is_human flag
+    const isHost = (msg.sender_id === 'HOST') || (msg.is_human === true);
 
     const alignClass = isHost ? 'justify-end' : 'justify-start';
     const bubbleClass = isHost
