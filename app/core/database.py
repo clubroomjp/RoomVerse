@@ -26,6 +26,7 @@ class ConversationLog(SQLModel, table=True):
     visitor_id: str = Field(index=True)
     sender: str # "visitor" or "host"
     message: str
+    model: Optional[str] = None
 
 class LoreEntry(SQLModel, table=True):
     keyword: str = Field(primary_key=True)
@@ -68,10 +69,10 @@ def get_session():
 
 # --- Helpers ---
 
-def log_visit(session: Session, visitor_id: str, visitor_name: str, callback_url: str | None):
-    # Log the visit
-    visit = VisitLog(visitor_id=visitor_id, visitor_name=visitor_name, callback_url=callback_url)
-    session.add(visit)
+def log_visit(session: Session, visitor_id: str, visitor_name: str, callback_url: str | None, message: str = None, sender: str = None, model: str = None, session_id: str = None):
+    # Log the visit (Only if it's a new visit or heartbeat? Actually we call this for every message usually?)
+    # If it's just a message log, maybe we shouldn't spam VisitLog?
+    # But current usage implies we might want to update "last_seen" every time.
     
     # Update Relationship
     relation = session.get(Relationship, visitor_id)
@@ -80,11 +81,27 @@ def log_visit(session: Session, visitor_id: str, visitor_name: str, callback_url
         session.add(relation)
     else:
         relation.last_met = datetime.datetime.utcnow()
-        relation.affinity += 1 # Increment affinity on visit
+        relation.affinity += 1 # Increment affinity on visit/interaction
         if relation.visitor_name != visitor_name:
             relation.visitor_name = visitor_name # Update name if changed
         session.add(relation)
             
+    # Save Message to ConversationLog if provided
+    if message and sender:
+        # Use provided session_id or default to visitor_id (legacy behavior)
+        # If session_id is provided (like "HOST_SESSION"), usage is clear.
+        log_session_id = session_id if session_id else visitor_id
+        
+        log = ConversationLog(
+            session_id=log_session_id,
+            visitor_id=visitor_id,
+            sender=sender,
+            message=message,
+            timestamp=datetime.datetime.utcnow(),
+            model=model
+        )
+        session.add(log)
+        
     session.commit()
     session.refresh(relation)
     return relation
