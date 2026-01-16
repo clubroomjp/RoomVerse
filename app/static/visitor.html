@@ -70,191 +70,245 @@
         <!-- HEADER -->
         <div class="p-4 glass border-b border-slate-700/50 flex justify-between items-center z-10">
             <div>
-                <h2 class="text-lg font-bold text-white tracking-wide" id="room-name-display">Room Information</h2>
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <p class="text-xs text-slate-400">
-                        <span id="online-label">Online</span>
-                    </p>
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        <span id="room-name-display">Room Information</span>
+                        <span class="text-slate-600">|</span>
+                        <span id="chat-header-char-name" class="cursor-pointer hover:text-blue-400 transition-colors"
+                            onclick="openProfileModal()">Character</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <p class="text-xs text-slate-400">
+                            <span id="online-label">Online</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center">
+                    <button onclick="leaveRoom()"
+                        class="text-xs text-red-300 hover:text-red-200 transition-colors bg-red-900/20 px-3 py-1 rounded-full border border-red-900/30 mr-2 hover:bg-red-900/40">
+                        <span id="leave-btn-text">Leave</span>
+                    </button>
+                    <!-- View Card Button Removed -->
                 </div>
             </div>
 
-            <div class="flex items-center">
-                <button onclick="leaveRoom()"
-                    class="text-xs text-red-300 hover:text-red-200 transition-colors bg-red-900/20 px-3 py-1 rounded-full border border-red-900/30 mr-2 hover:bg-red-900/40">
-                    <span id="leave-btn-text">Leave</span>
-                </button>
-                <button onclick="viewCard()"
-                    class="text-xs text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50 hover:bg-slate-700/50">
-                    <span id="view-card-text">View Card</span>
-                </button>
+            <!-- CHAT AREA -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+                <!-- Messages will appear here -->
+                <div class="flex justify-center my-4 opacity-50">
+                    <span id="sys-connected"
+                        class="text-xs text-slate-500 bg-slate-900/50 px-3 py-1 rounded-full border border-slate-800">Connection
+                        Established</span>
+                </div>
+            </div>
+
+            <!-- TYPING INDICATOR (Hidden by default) -->
+            <div id="typing-indicator" class="px-6 py-2 hidden">
+                <span id="typing-text" class="text-xs text-slate-500 animate-pulse">Host is typing...</span>
+            </div>
+
+            <!-- INPUT AREA -->
+            <div class="p-4 glass border-t border-slate-700/50 z-10 pb-6 md:pb-4">
+                <div class="max-w-4xl mx-auto flex gap-3">
+                    <input type="text" id="message-input" placeholder="Type a message..."
+                        class="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-purple-500 outline-none transition-all shadow-inner"
+                        onkeydown="if(event.key==='Enter') sendMessage()">
+
+                    <button onclick="sendMessage()"
+                        class="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-xl transition-colors shadow-lg border border-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- CHAT AREA -->
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
-            <!-- Messages will appear here -->
-            <div class="flex justify-center my-4 opacity-50">
-                <span id="sys-connected"
-                    class="text-xs text-slate-500 bg-slate-900/50 px-3 py-1 rounded-full border border-slate-800">Connection
-                    Established</span>
-            </div>
-        </div>
-
-        <!-- TYPING INDICATOR (Hidden by default) -->
-        <div id="typing-indicator" class="px-6 py-2 hidden">
-            <span id="typing-text" class="text-xs text-slate-500 animate-pulse">Host is typing...</span>
-        </div>
-
-        <!-- INPUT AREA -->
-        <div class="p-4 glass border-t border-slate-700/50 z-10 pb-6 md:pb-4">
-            <div class="max-w-4xl mx-auto flex gap-3">
-                <input type="text" id="message-input" placeholder="Type a message..."
-                    class="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-purple-500 outline-none transition-all shadow-inner"
-                    onkeydown="if(event.key==='Enter') sendMessage()">
-
-                <button onclick="sendMessage()"
-                    class="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-xl transition-colors shadow-lg border border-slate-600">
+        <!-- Profile View Modal -->
+        <div id="profile-modal"
+            class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 anime-fade-in"
+            onclick="if(event.target===this) closeProfileModal()">
+            <div
+                class="glass max-w-2xl w-full rounded-2xl p-6 shadow-2xl relative bg-slate-900/50 overflow-y-auto max-h-[90vh]">
+                <button onclick="closeProfileModal()"
+                    class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                         stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
+                <div class="flex flex-col md:flex-row gap-6 items-start">
+                    <div class="w-full md:w-1/3 flex-shrink-0">
+                        <div class="aspect-[2/3] rounded-xl overflow-hidden glass shadow-lg relative bg-slate-800/50">
+                            <img id="profile-image" src="" class="w-full h-full object-cover hidden" alt="Avatar">
+                            <div id="profile-no-image"
+                                class="w-full h-full flex items-center justify-center text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="w-12 h-12 opacity-50">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-2/3 space-y-4 text-left">
+                        <div>
+                            <h2 id="profile-name"
+                                class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                                Name</h2>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800/50 rounded p-3 border border-slate-700/50">
+                                <h4 class="text-[10px] font-bold text-slate-500 uppercase mb-1">Description</h4>
+                                <p id="profile-desc" class="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                    ...</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded p-3 border border-slate-700/50">
+                                <h4 class="text-[10px] font-bold text-slate-500 uppercase mb-1">Personality</h4>
+                                <p id="profile-personality"
+                                    class="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed italic">...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // State
-        const state = {
-            visitorId: localStorage.getItem('visitor_id') || crypto.randomUUID(),
-            visitorName: localStorage.getItem('visitor_name') || "",
-            sessionId: null,
-            pollInterval: null,
-            charName: "Host", // Fallback
-            lang: "en"
-        };
+        <script>
+            // State
+            const state = {
+                visitorId: localStorage.getItem('visitor_id') || crypto.randomUUID(),
+                visitorName: localStorage.getItem('visitor_name') || "",
+                sessionId: null,
+                pollInterval: null,
+                charName: "Host", // Fallback
+                lang: "en"
+            };
 
-        // I18n Data
-        const i18n = {
-            en: {
-                welcome_title: "How do you do?",
-                enter_name: "Enter your name to visit this room.",
-                name_placeholder: "Your Name...",
-                enter_btn: "Enter Room",
-                room_info: "Room Information",
-                view_card: "View Card",
-                leave_btn: "Leave",
-                online: "Online",
-                visitor: "Visitor",
-                connected: "Connection Established",
-                typing: "Host is typing...",
-                input_placeholder: "Type a message...",
-                error_name: "Please enter your name.",
-                error_closed: "Failed to enter. The room might be CLOSED.",
-                entering: "Entering..."
-            },
-            ja: {
-                welcome_title: "ごきげんいかが？",
-                enter_name: "名前を入力してお入りください",
-                name_placeholder: "あなたの名前...",
-                enter_btn: "入室する",
-                room_info: "ルーム情報",
-                view_card: "カードを見る",
-                leave_btn: "退出",
-                online: "オンライン",
-                visitor: "人",
-                connected: "接続が確立されました",
-                typing: "ホストが入力中...",
-                input_placeholder: "メッセージを入力...",
-                error_name: "名前を入力してください。",
-                error_closed: "入室に失敗しました。ルームが閉じている可能性があります。",
-                entering: "入室中..."
+            // I18n Data
+            const i18n = {
+                en: {
+                    welcome_title: "How do you do?",
+                    enter_name: "Enter your name to visit this room.",
+                    name_placeholder: "Your Name...",
+                    enter_btn: "Enter Room",
+                    room_info: "Room Information",
+                    view_card: "View Card",
+                    leave_btn: "Leave",
+                    online: "Online",
+                    visitor: "Visitor",
+                    connected: "Connection Established",
+                    typing: "Host is typing...",
+                    input_placeholder: "Type a message...",
+                    error_name: "Please enter your name.",
+                    error_closed: "Failed to enter. The room might be CLOSED.",
+                    entering: "Entering..."
+                },
+                ja: {
+                    welcome_title: "ごきげんいかが？",
+                    enter_name: "名前を入力してお入りください",
+                    name_placeholder: "あなたの名前...",
+                    enter_btn: "入室する",
+                    room_info: "ルーム情報",
+                    view_card: "カードを見る",
+                    leave_btn: "退出",
+                    online: "オンライン",
+                    visitor: "人",
+                    connected: "接続が確立されました",
+                    typing: "ホストが入力中...",
+                    input_placeholder: "メッセージを入力...",
+                    error_name: "名前を入力してください。",
+                    error_closed: "入室に失敗しました。ルームが閉じている可能性があります。",
+                    entering: "入室中..."
+                }
+            };
+
+            // Save ID immediately
+            localStorage.setItem('visitor_id', state.visitorId);
+
+            // --- Init ---
+            // Determine if we need login
+            if (state.visitorName) {
+                document.getElementById('visitor-name').value = state.visitorName;
             }
-        };
 
-        // Save ID immediately
-        localStorage.setItem('visitor_id', state.visitorId);
+            // Fetch Config & Init
+            initPage();
 
-        // --- Init ---
-        // Determine if we need login
-        if (state.visitorName) {
-            document.getElementById('visitor-name').value = state.visitorName;
-        }
+            // --- Functions ---
 
-        // Fetch Config & Init
-        initPage();
+            async function initPage() {
+                try {
+                    // Fetch Config
+                    const res = await fetch('/api/config');
+                    const config = await res.json();
 
-        // --- Functions ---
+                    // Apply Lang
+                    if (config.dashboard && config.dashboard.language) {
+                        state.lang = config.dashboard.language;
+                    }
 
-        async function initPage() {
-            try {
-                // Fetch Config
-                const res = await fetch('/api/config');
-                const config = await res.json();
+                    // Update Static Texts
+                    updateTexts();
 
-                // Apply Lang
-                if (config.dashboard && config.dashboard.language) {
-                    state.lang = config.dashboard.language;
+                    // Apply Names
+                    if (config.room && config.room.name) {
+                        document.getElementById('room-name-display').innerText = config.room.name;
+                        document.title = config.room.name;
+                    }
+                    if (config.character && config.character.name) {
+                        state.charName = config.character.name;
+                        updateHeaderCharName();
+                    }
+                } catch (e) {
+                    console.error("Failed to load config", e);
                 }
-
-                // Update Static Texts
-                updateTexts();
-
-                // Apply Names
-                if (config.room && config.room.name) {
-                    document.getElementById('room-name-display').innerText = config.room.name;
-                    document.title = config.room.name;
-                }
-                if (config.character && config.character.name) {
-                    state.charName = config.character.name;
-                }
-            } catch (e) {
-                console.error("Failed to load config", e);
             }
-        }
 
-        function updateTexts() {
-            const texts = i18n[state.lang] || i18n.en;
+            function updateTexts() {
+                const texts = i18n[state.lang] || i18n.en;
 
-            // Login Modal
-            updateTextById('welcome-title', texts.welcome_title);
-            updateTextById('welcome-desc', texts.enter_name);
+                // Login Modal
+                updateTextById('welcome-title', texts.welcome_title);
+                updateTextById('welcome-desc', texts.enter_name);
 
-            const nameInput = document.getElementById('visitor-name');
-            if (nameInput) nameInput.placeholder = texts.name_placeholder;
+                const nameInput = document.getElementById('visitor-name');
+                if (nameInput) nameInput.placeholder = texts.name_placeholder;
 
-            const enterBtn = document.querySelector('#login-modal button span');
-            if (enterBtn) enterBtn.innerText = texts.enter_btn;
+                const enterBtn = document.querySelector('#login-modal button span');
+                if (enterBtn) enterBtn.innerText = texts.enter_btn;
 
-            // Header
-            updateTextById('view-card-text', texts.view_card);
-            updateTextById('leave-btn-text', texts.leave_btn);
+                // Header
+                updateTextById('view-card-text', texts.view_card);
+                updateTextById('leave-btn-text', texts.leave_btn);
 
-            const onlLabel = document.getElementById('online-label');
-            if (onlLabel) onlLabel.innerHTML = `${texts.online} &bull; <span id="visitor-count">1</span> ${texts.visitor}`;
+                const onlLabel = document.getElementById('online-label');
+                if (onlLabel) onlLabel.innerHTML = `${texts.online} &bull; <span id="visitor-count">1</span> ${texts.visitor}`;
 
-            updateTextById('sys-connected', texts.connected);
-            updateTextById('typing-text', texts.typing);
+                updateTextById('sys-connected', texts.connected);
+                updateTextById('typing-text', texts.typing);
 
-            const msgInput = document.getElementById('message-input');
-            if (msgInput) msgInput.placeholder = texts.input_placeholder;
-        }
+                const msgInput = document.getElementById('message-input');
+                if (msgInput) msgInput.placeholder = texts.input_placeholder;
+            }
 
-        function updateTextById(id, text) {
-            const el = document.getElementById(id);
-            if (el) el.innerText = text;
-        }
+            function updateTextById(id, text) {
+                const el = document.getElementById(id);
+                if (el) el.innerText = text;
+            }
 
-        function appendMessage(sender, text, isMe = false) {
-            const container = document.getElementById('chat-container');
-            const alignClass = isMe ? 'justify-end' : 'justify-start';
-            const bubbleClass = isMe
-                ? 'bg-purple-600 text-white rounded-br-none'
-                : 'bg-slate-700 text-slate-200 rounded-bl-none';
+            function appendMessage(sender, text, isMe = false) {
+                const container = document.getElementById('chat-container');
+                const alignClass = isMe ? 'justify-end' : 'justify-start';
+                const bubbleClass = isMe
+                    ? 'bg-purple-600 text-white rounded-br-none'
+                    : 'bg-slate-700 text-slate-200 rounded-bl-none';
 
-            const html = `
+                const html = `
                 <div class="flex ${alignClass} mb-2 anime-fade-in group">
                     <div class="max-w-[80%] md:max-w-[70%]">
                         <div class="flex items-baseline justify-between mb-1 px-1">
@@ -264,143 +318,188 @@
                     </div>
                 </div>
             `;
-            container.insertAdjacentHTML('beforeend', html);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        async function enterRoom() {
-            const nameInput = document.getElementById('visitor-name');
-            const name = nameInput.value.trim();
-            const btnText = document.getElementById('enter-btn-text');
-            const btn = document.querySelector('#login-modal button');
-            const err = document.getElementById('error-msg');
-            const texts = i18n[state.lang] || i18n.en;
-
-            if (!name) {
-                err.innerText = texts.error_name;
-                err.classList.remove('hidden');
-                return;
+                container.insertAdjacentHTML('beforeend', html);
+                container.scrollTop = container.scrollHeight;
             }
 
-            // Disable UI
-            btn.disabled = true;
-            btnText.innerText = texts.entering;
-            err.classList.add('hidden');
+            async function enterRoom() {
+                const nameInput = document.getElementById('visitor-name');
+                const name = nameInput.value.trim();
+                const btnText = document.getElementById('enter-btn-text');
+                const btn = document.querySelector('#login-modal button');
+                const err = document.getElementById('error-msg');
+                const texts = i18n[state.lang] || i18n.en;
 
-            try {
-                // Call /visit
-                const payload = {
-                    visitor_id: state.visitorId,
-                    visitor_name: name,
-                    message: "User connected via Web UI"
-                };
-
-                const res = await fetch('/visit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) throw new Error(texts.error_closed);
-
-                const data = await res.json();
-
-                // Success
-                state.visitorName = name;
-                state.sessionId = data.session_id;
-
-                // Update Host Name from server response
-                if (data.host_name) state.charName = data.host_name;
-
-                localStorage.setItem('visitor_name', name);
-
-                // Transition UI
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('main-interface').classList.remove('hidden');
-                document.getElementById('main-interface').classList.add('anime-fade-in');
-
-                // Initial Response logic
-                if (data.response) {
-                    appendMessage(state.charName, data.response, false);
+                if (!name) {
+                    err.innerText = texts.error_name;
+                    err.classList.remove('hidden');
+                    return;
                 }
 
-                // Explicitly re-apply title to header if available
-                const nameDisplay = document.getElementById('room-name-display');
-                if (document.title && document.title !== "Room Visitor") {
-                    nameDisplay.innerText = document.title;
-                }
+                // Disable UI
+                btn.disabled = true;
+                btnText.innerText = texts.entering;
+                err.classList.add('hidden');
 
-            } catch (e) {
-                console.error(e);
-                err.innerText = e.message || texts.error_closed;
-                err.classList.remove('hidden');
-                btn.disabled = false;
-                btnText.innerText = texts.enter_btn;
-            }
-        }
-
-        async function leaveRoom() {
-            // Confirm? No, just leave usually is better UX for "Exit" button unless misclick sensitive
-            if (!confirm("Are you sure you want to leave?")) return;
-
-            try {
-                // Use beacon for best-effort send on unload, or fetch await
-                await fetch("/leave", {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ visitor_id: state.visitorId })
-                });
-            } catch (e) { console.error(e); }
-
-            // Clear state?
-            // Actually, usually you just reload to "logout" state
-            location.reload();
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            input.value = "";
-            appendMessage(state.visitorName, text, true);
-
-            // Show typing
-            const typing = document.getElementById('typing-indicator');
-            typing.classList.remove('hidden');
-
-            try {
-                const res = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                try {
+                    // Call /visit
+                    const payload = {
                         visitor_id: state.visitorId,
-                        session_id: state.sessionId,
-                        message: text
-                    })
-                });
+                        visitor_name: name,
+                        message: "User connected via Web UI"
+                    };
 
-                if (!res.ok) throw new Error("Send failed");
-                const data = await res.json();
+                    const res = await fetch('/visit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                // Hide typing
-                typing.classList.add('hidden');
+                    if (!res.ok) throw new Error(texts.error_closed);
 
-                if (data.response) {
-                    appendMessage(state.charName, data.response, false);
+                    const data = await res.json();
+
+                    // Success
+                    state.visitorName = name;
+                    state.sessionId = data.session_id;
+
+                    // Update Host Name from server response
+                    if (data.host_name) {
+                        state.charName = data.host_name;
+                        updateHeaderCharName();
+                    }
+
+                    localStorage.setItem('visitor_name', name);
+
+                    // Transition UI
+                    document.getElementById('login-modal').classList.add('hidden');
+                    document.getElementById('main-interface').classList.remove('hidden');
+                    document.getElementById('main-interface').classList.add('anime-fade-in');
+
+                    // Initial Response logic
+                    if (data.response) {
+                        appendMessage(state.charName, data.response, false);
+                    }
+
+                    // Explicitly re-apply title to header if available
+                    const nameDisplay = document.getElementById('room-name-display');
+                    if (document.title && document.title !== "Room Visitor") {
+                        nameDisplay.innerText = document.title;
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    err.innerText = e.message || texts.error_closed;
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                    btnText.innerText = texts.enter_btn;
                 }
-
-            } catch (e) {
-                console.error(e);
-                appendMessage("System", "Error sending message.", false);
-                typing.classList.add('hidden');
             }
-        }
 
-        async function viewCard() {
-            window.open('/dashboard/card_view.html', '_blank');
-        }
-    </script>
+            async function leaveRoom() {
+                // Confirm? No, just leave usually is better UX for "Exit" button unless misclick sensitive
+                if (!confirm("Are you sure you want to leave?")) return;
+
+                try {
+                    // Use beacon for best-effort send on unload, or fetch await
+                    await fetch("/leave", {
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ visitor_id: state.visitorId })
+                    });
+                } catch (e) { console.error(e); }
+
+                // Clear state?
+                // Actually, usually you just reload to "logout" state
+                location.reload();
+            }
+
+            async function sendMessage() {
+                const input = document.getElementById('message-input');
+                const text = input.value.trim();
+                if (!text) return;
+
+                input.value = "";
+                appendMessage(state.visitorName, text, true);
+
+                // Show typing
+                const typing = document.getElementById('typing-indicator');
+                typing.classList.remove('hidden');
+
+                try {
+                    const res = await fetch('/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            visitor_id: state.visitorId,
+                            session_id: state.sessionId,
+                            message: text
+                        })
+                    });
+
+                    if (!res.ok) throw new Error("Send failed");
+                    const data = await res.json();
+
+                    // Hide typing
+                    typing.classList.add('hidden');
+
+                    if (data.response) {
+                        appendMessage(state.charName, data.response, false);
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    appendMessage("System", "Error sending message.", false);
+                    typing.classList.add('hidden');
+                }
+            }
+
+            async function openProfileModal() {
+                const modal = document.getElementById('profile-modal');
+                const nameEl = document.getElementById('profile-name');
+                const descEl = document.getElementById('profile-desc');
+                const persEl = document.getElementById('profile-personality');
+                const img = document.getElementById('profile-image');
+                const noImg = document.getElementById('profile-no-image');
+
+                // Reset
+                nameEl.innerText = "Loading...";
+
+                modal.classList.remove('hidden');
+
+                try {
+                    const res = await fetch('/card');
+                    const card = await res.json();
+
+                    nameEl.innerText = card.name || state.charName;
+                    descEl.innerText = card.description || "No description.";
+                    persEl.innerText = card.personality || "No personality defined.";
+
+                    if (card.image_path) {
+                        img.src = '/dashboard/cards/' + card.image_path;
+                        img.classList.remove('hidden');
+                        noImg.classList.add('hidden');
+                    } else {
+                        img.classList.add('hidden');
+                        noImg.classList.remove('hidden');
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    nameEl.innerText = "Error";
+                }
+            }
+
+            function closeProfileModal() {
+                document.getElementById('profile-modal').classList.add('hidden');
+            }
+
+            function updateHeaderCharName() {
+                const el = document.getElementById('chat-header-char-name');
+                if (el) el.innerText = state.charName;
+            }
+
+        </script>
 </body>
 
 </html>

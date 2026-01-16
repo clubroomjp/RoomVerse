@@ -490,6 +490,10 @@ async function loadConfig() {
         document.getElementById('char-name').value = config.character.name || "";
         document.getElementById('char-name').value = config.character.name || "";
 
+        // Update header name
+        const headerNameEl = document.getElementById('chat-header-char-name');
+        if (headerNameEl) headerNameEl.innerText = config.character.name || "Character";
+
         // Handle Active Card UI
         const personaLabel = document.querySelector('label[data-i18n="char_persona"]');
         const activeCardDisplay = document.getElementById('active-card-display');
@@ -1171,3 +1175,47 @@ document.getElementById('refresh-rooms').addEventListener('click', fetchRooms);
     // Initial Tab
     switchTab('dashboard');
 })();
+
+// --- Profile View Modal ---
+async function openProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('profile-name');
+    const descEl = document.getElementById('profile-desc');
+    const persEl = document.getElementById('profile-personality');
+    const img = document.getElementById('profile-image');
+    const noImg = document.getElementById('profile-no-image');
+
+    // Reset
+    nameEl.innerText = "Loading...";
+
+    modal.classList.remove('hidden');
+
+    try {
+        const res = await fetch('/card'); // Use public endpoint
+        const card = await res.json();
+
+        nameEl.innerText = card.name || state.config.character.name || "Unknown";
+        descEl.innerText = card.description || "No description.";
+        persEl.innerText = card.personality || "No personality defined.";
+
+        if (card.image_path) {
+            img.src = '/dashboard/cards/' + card.image_path;
+            img.classList.remove('hidden');
+            noImg.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            noImg.classList.remove('hidden');
+        }
+
+    } catch (e) {
+        console.error(e);
+        nameEl.innerText = "Error";
+    }
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    if (modal) modal.classList.add('hidden');
+}
