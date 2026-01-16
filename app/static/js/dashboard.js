@@ -873,138 +873,218 @@ function submitPassword() {
     }
 }
 
-// --- Lorebook Logic ---
-let allLoreEntries = [];
+// --- Lorebook Manager V2 ---
+let loreState = {
+    books: ["Default"],
+    currentBook: "Default",
+    entries: [],
+    editingEntry: null
+};
 
-async function renderLoreList() {
-    const list = document.getElementById('lore-list');
-    const search = document.getElementById('lore-search').value.toLowerCase();
+async function openLorebookManager() {
+    document.getElementById('lorebook-manager-modal').classList.remove('hidden');
+    await loadLorebookBooks();
+    await loadLorebookEntries();
+    updateActiveLorebookBadge();
+}
+
+function closeLorebookManager() {
+    document.getElementById('lorebook-manager-modal').classList.add('hidden');
+}
+
+async function loadLorebookBooks() {
+    try {
+        const res = await fetch('/api/lore/books');
+        loreState.books = await res.json();
+
+        const select = document.getElementById('lorebook-select');
+        select.innerHTML = loreState.books.map(b => `<option value="${b}">${b}</option>`).join('');
+
+        // Restore selection if exists
+        if (loreState.books.includes(loreState.currentBook)) {
+            select.value = loreState.currentBook;
+        } else {
+            select.value = "Default";
+            loreState.currentBook = "Default";
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function loadLorebookEntries() {
+    loreState.currentBook = document.getElementById('lorebook-select').value;
+    const list = document.getElementById('lore-manager-list');
+    list.innerHTML = '<div class="text-center text-slate-400 text-xs mt-4">Loading...</div>';
 
     try {
-        const res = await fetch('/api/lore');
-        allLoreEntries = await res.json();
+        const res = await fetch(`/api/lore?book=${encodeURIComponent(loreState.currentBook)}`);
+        loreState.entries = await res.json();
+        renderLoreManagerList();
     } catch (e) { console.error(e); }
+}
 
-    const filtered = allLoreEntries.filter(e => e.keyword.toLowerCase().includes(search));
-
-    if (filtered.length === 0) {
-        list.innerHTML = `<div class="text-center text-slate-400 text-xs mt-4">No entries found.</div>`;
+function renderLoreManagerList() {
+    const list = document.getElementById('lore-manager-list');
+    if (loreState.entries.length === 0) {
+        list.innerHTML = '<div class="text-center text-slate-400 text-xs mt-4">No entries.</div>';
         return;
     }
 
-    list.innerHTML = filtered.map(item => `
-        <div onclick="selectLore('${item.keyword}')" class="p-3 bg-white dark:bg-slate-800 rounded shadow-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700/50 transition border-l-4 ${item.source === 'host' ? 'border-blue-500' : 'border-green-500'}">
-            <div class="flex justify-between items-center">
-                <span class="font-bold text-slate-700 dark:text-slate-200">${item.keyword}</span>
-                <span class="text-[10px] uppercase font-mono px-1 rounded ${item.source === 'host' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">${item.source}</span>
-            </div>
-            <p class="text-xs text-slate-500 line-clamp-1 mt-1">${item.content}</p>
+    list.innerHTML = loreState.entries.map(e => `
+        <div onclick="openLoreEntryEditor('${e.keyword}')" 
+             class="p-2 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex justify-between items-center group">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">${e.keyword}</span>
+            <span class="text-[10px] text-slate-400 ${e.enabled ? '' : 'text-red-500'}">${e.enabled ? '' : '(Disabled)'}</span>
         </div>
     `).join('');
 }
 
-function selectLore(keyword) {
-    const item = allLoreEntries.find(e => e.keyword === keyword);
-    if (!item) return;
-    openLoreModal(item);
-}
+function openLoreEntryEditor(keyword) {
+    const container = document.getElementById('lore-editor-container');
+    const placeholder = document.getElementById('lore-editor-placeholder');
 
-function openLoreModal(item = null) {
-    const modal = document.getElementById('lore-modal');
-    modal.classList.remove('hidden');
+    container.classList.remove('hidden');
+    placeholder.classList.add('hidden');
 
-    if (item) {
-        document.getElementById('lore-modal-title').innerText = i18n[state.lang].lore_modal_title || 'Edit Lore';
-        document.getElementById('lore-keyword').value = item.keyword;
-        document.getElementById('lore-keyword').disabled = true; // Key cannot be changed easily for now
-        document.getElementById('lore-content').value = item.content;
+    if (keyword) {
+        // Edit existing
+        const entry = loreState.entries.find(e => e.keyword === keyword);
+        loreState.editingEntry = entry;
+
+        document.getElementById('lore-edit-keyword').value = entry.keyword;
+        document.getElementById('lore-edit-keyword').disabled = true; // PK cannot change easily
+        document.getElementById('lore-edit-secondary').value = entry.secondary_keys || "";
+        document.getElementById('lore-edit-content').value = entry.content;
+        document.getElementById('lore-edit-enabled').checked = entry.enabled !== false;
+        document.getElementById('lore-edit-constant').checked = entry.constant === true;
     } else {
-        document.getElementById('lore-modal-title').innerText = i18n[state.lang].add_lore || 'Add Lore';
-        document.getElementById('lore-keyword').value = '';
-        document.getElementById('lore-keyword').disabled = false;
-        document.getElementById('lore-content').value = '';
+        // New
+        loreState.editingEntry = null;
+        document.getElementById('lore-edit-keyword').value = "";
+        document.getElementById('lore-edit-keyword').disabled = false;
+        document.getElementById('lore-edit-secondary').value = "";
+        document.getElementById('lore-edit-content').value = "";
+        document.getElementById('lore-edit-enabled').checked = true;
+        document.getElementById('lore-edit-constant').checked = false;
     }
 }
 
-function closeLoreModal() {
-    document.getElementById('lore-modal').classList.add('hidden');
-}
+async function saveLoreEntryV2() {
+    const keyword = document.getElementById('lore-edit-keyword').value.trim();
+    if (!keyword) return alert("Keyword is required");
 
-async function saveLoreEntry() {
-    const keyword = document.getElementById('lore-keyword').value.trim();
-    const content = document.getElementById('lore-content').value.trim();
-    if (!keyword || !content) return;
+    const entry = {
+        keyword: keyword,
+        content: document.getElementById('lore-edit-content').value,
+        secondary_keys: document.getElementById('lore-edit-secondary').value,
+        enabled: document.getElementById('lore-edit-enabled').checked,
+        constant: document.getElementById('lore-edit-constant').checked,
+        book: loreState.currentBook
+    };
 
     try {
         const res = await fetch('/api/lore', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keyword, content, source: 'host' })
+            body: JSON.stringify(entry)
         });
         if (res.ok) {
-            closeLoreModal();
-            renderLoreList();
+            await loadLorebookEntries();
+            // Re-open editor for refreshing
+            openLoreEntryEditor(keyword);
         }
-    } catch (e) { alert('Error saving lore'); }
+    } catch (e) { alert("Error saving"); }
 }
 
+async function deleteLoreEntry() {
+    const keyword = document.getElementById('lore-edit-keyword').value;
+    if (!confirm(`Delete entry "${keyword}"?`)) return;
+
+    try {
+        await fetch(`/api/lore/${keyword}`, { method: 'DELETE' });
+        loadLorebookEntries();
+        document.getElementById('lore-editor-container').classList.add('hidden');
+        document.getElementById('lore-editor-placeholder').classList.remove('hidden');
+    } catch (e) { alert("Error deleting"); }
+}
+
+async function createNewLorebook() {
+    const name = prompt("Enter new Lorebook Name:");
+    if (!name) return;
+
+    // To create a book, we technically just need to select it. 
+    // But since list comes from DB, we need an entry.
+    // We'll simulate creating it by adding a temp entry or just switching UI context.
+    // Let's switch context and ask user to add entry.
+
+    // Check if exists
+    if (loreState.books.includes(name)) {
+        alert("Book already exists");
+        return;
+    }
+
+    // Add to dropdown temp
+    const select = document.getElementById('lorebook-select');
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.innerText = name;
+    select.appendChild(opt);
+    select.value = name;
+
+    loreState.currentBook = name;
+    loreState.entries = []; // Empty
+    renderLoreManagerList();
+
+    // Prompt to create first entry?
+    // openLoreEntryEditor(null);
+}
+
+async function setActiveLorebook() {
+    const current = loreState.currentBook;
+    state.config.character.active_lorebook = current;
+    updateActiveLorebookBadge();
+    saveConfig(); // Persist
+}
+
+function updateActiveLorebookBadge() {
+    const badge = document.getElementById('active-lorebook-badge');
+    const active = state.config.character.active_lorebook || "Default";
+    badge.innerText = active;
+
+    // Highlight if current matches active
+    if (loreState.currentBook === active) {
+        badge.classList.add('bg-green-500/10', 'text-green-500');
+        badge.classList.remove('bg-slate-500/10', 'text-slate-500');
+    } else {
+        badge.classList.remove('bg-green-500/10', 'text-green-500');
+        badge.classList.add('bg-slate-500/10', 'text-slate-500');
+    }
+}
+
+// --- Teach Logic (Restored) ---
 function openTeachModal() {
-    // Re-use lore modal but for "Teaching" (Host manually teaching)
-    // Actually, the "Teach" button in Chat UI is for sending the !learn command, 
-    // OR just adding to DB?
-    // If we add to DB directly, it's same as "Add Lore".
-    // User asked for "Teach AI command... via button".
-    // Let's implement it as: Open a modal -> Input -> Send "!learn KW Content" message to chat.
-    // This allows the AI to react to it as if it was a command in chat.
-
-    const modal = document.getElementById('lore-modal');
+    const modal = document.getElementById('teach-modal');
     modal.classList.remove('hidden');
-    document.getElementById('lore-modal-title').innerText = "Teach AI (Send Command)";
-    document.getElementById('lore-keyword').value = '';
-    document.getElementById('lore-keyword').disabled = false;
-    document.getElementById('lore-content').value = '';
+    document.getElementById('teach-keyword').value = '';
+    document.getElementById('teach-content').value = '';
+}
 
-    // Override Save button to behave as Send Command
-    const saveBtn = modal.querySelector('button[onclick="saveLoreEntry()"]');
-    saveBtn.setAttribute('onclick', 'sendTeachCommand()');
-    saveBtn.innerText = "Teach";
+function closeTeachModal() {
+    document.getElementById('teach-modal').classList.add('hidden');
 }
 
 async function sendTeachCommand() {
-    const keyword = document.getElementById('lore-keyword').value.trim();
-    const content = document.getElementById('lore-content').value.trim();
+    const keyword = document.getElementById('teach-keyword').value.trim();
+    const content = document.getElementById('teach-content').value.trim();
     if (!keyword || !content) return;
 
-    // Construct command
     const cmd = `!learn ${keyword} ${content}`;
 
-    // Send as Host Message
-    // Reuse sendHostMessage logic but with custom text
-    try {
-        await fetch('/api/room/chat', { // Assuming endpoint for host chat logic? 
-            // Wait, sendHostMessage() in dashboard simply calls... wait, where is sendHostMessage logic?
-            // Ah, sendHostMessage() is in lines 600+. I'll fetch it.
-        });
+    // Simulate Host Message
+    const input = document.getElementById('host-input');
+    input.value = cmd;
+    await sendHostMessage();
 
-        // Actually, just calling the backend chat API or reusing the input field.
-        // Let's reuse the input field logic for simplicity.
-        // But better to call API directly if possible.
-        // Let's simulate input.
-        const input = document.getElementById('host-input');
-        const originalVal = input.value;
-        input.value = cmd;
-        await sendHostMessage(); // This function will clear input
-        // Restore if needed? No, command sent.
-
-        closeLoreModal();
-
-        // Reset button
-        const modal = document.getElementById('lore-modal');
-        const saveBtn = modal.querySelector('button[onclick="sendTeachCommand()"]');
-        saveBtn.setAttribute('onclick', 'saveLoreEntry()');
-        saveBtn.innerText = i18n[state.lang].save_btn;
-
-    } catch (e) { console.error(e); }
+    closeTeachModal();
 }
 
 

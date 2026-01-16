@@ -2,12 +2,14 @@ import json
 import os
 import uuid
 from pydantic import BaseModel
+from typing import Optional
 
 class CharacterConfig(BaseModel):
     name: str
     persona: str
     system_prompt: str
-    active_card_id: int | None = None # Linked Character Card ID
+    active_card_id: Optional[int] = None
+    active_lorebook: str = "Default" # V2 Lorebook
 
 class LLMConfig(BaseModel):
     base_url: str

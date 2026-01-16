@@ -32,6 +32,12 @@ class LoreEntry(SQLModel, table=True):
     keyword: str = Field(primary_key=True)
     keyword_en: Optional[str] = None # Auto-translated keyword
     content: str
+    
+    # V2 Enhancements
+    book: str = Field(default="Default", index=True)
+    secondary_keys: Optional[str] = None # Comma-separated alias
+    constant: bool = Field(default=False) # Always active
+    enabled: bool = Field(default=True)
     content_en: Optional[str] = None # Auto-translated description
     source: str = Field(default="host") # "host" or "visitor"
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)

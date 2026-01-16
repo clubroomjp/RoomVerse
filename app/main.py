@@ -383,12 +383,28 @@ async def delete_all_logs():
     return {"status": "deleted"}
 
 @app.get("/api/lore")
-async def list_lore_entries():
-    """List all lorebook entries."""
+async def list_lore_entries(book: str | None = None):
+    """List lorebook entries, optionally filtered by book."""
     with get_session_wrapper() as session:
         from sqlmodel import select
-        entries = session.exec(select(LoreEntry)).all()
+        query = select(LoreEntry)
+        if book:
+            query = query.where(LoreEntry.book == book)
+        entries = session.exec(query).all()
         return entries
+
+@app.get("/api/lore/books")
+async def list_lore_books():
+    """List unique lorebook names."""
+    with get_session_wrapper() as session:
+        from sqlmodel import select, distinct
+        # distinct() in SQLModel/SQLAlchemy
+        statement = select(distinct(LoreEntry.book))
+        books = session.exec(statement).all()
+        # Ensure Default exists if empty?
+        if "Default" not in books:
+            books = ["Default"] + [b for b in books if b != "Default"]
+        return sorted(list(set(books)))
 
 class LoreEntryRequest(BaseModel):
     keyword: str
@@ -396,6 +412,11 @@ class LoreEntryRequest(BaseModel):
     source: str = "host"
     keyword_en: Annotated[str | None, "English Translation of Keyword"] = None
     content_en: Annotated[str | None, "English Translation of Description"] = None
+    # V2
+    book: str = "Default"
+    secondary_keys: str | None = None
+    constant: bool = False
+    enabled: bool = True
 
 @app.post("/api/lore")
 async def save_lore_entry(entry: LoreEntryRequest):
@@ -421,15 +442,26 @@ async def save_lore_entry(entry: LoreEntryRequest):
             existing.content = entry.content
             existing.source = entry.source
             if kw_en: existing.keyword_en = kw_en
+            if kw_en: existing.keyword_en = kw_en
             if cnt_en: existing.content_en = cnt_en
+            # V2 Update
+            existing.book = entry.book
+            existing.secondary_keys = entry.secondary_keys
+            existing.constant = entry.constant
+            existing.enabled = entry.enabled
             session.add(existing)
+        else:
         else:
             new_entry = LoreEntry(
                 keyword=entry.keyword, 
                 content=entry.content, 
                 source=entry.source,
                 keyword_en=kw_en,
-                content_en=cnt_en
+                content_en=cnt_en,
+                book=entry.book,
+                secondary_keys=entry.secondary_keys,
+                constant=entry.constant,
+                enabled=entry.enabled
             )
             session.add(new_entry)
         session.commit()
@@ -582,22 +614,49 @@ def get_lore_context(session: Session, message: str, depth: int = 2) -> str:
     found_entries = {} # keyword -> content_to_use
     search_text = message.lower()
     
-    # Get all keywords first (Optimization: valid if DB is small. For large DB, use FTS or specific search)
-    all_lore = session.exec(select(LoreEntry)).all()
+    # Get all lore for current book (or Default)
+    active_book = config.character.active_lorebook
+    # We fetch ALL enabled entries for the active book
+    query = select(LoreEntry).where(LoreEntry.enabled == True)
+    if active_book != "All": # option to have All? stick to specific for now
+        query = query.where(LoreEntry.book == active_book)
+        
+    all_lore = session.exec(query).all()
     if not all_lore:
         return ""
         
+    # Check constants first
+    constants = [e.content for e in all_lore if e.constant]
+    
     for _ in range(depth):
         new_found = False
         for entry in all_lore:
-            # Check native keyword
+            if entry.keyword in found_entries:
+                continue
+
+            # Check primary keyword
             matched = False
-            if entry.keyword.lower() in search_text:
-                matched = True
-            # Check English keyword if available
-            elif entry.keyword_en and entry.keyword_en.lower() in search_text:
-                matched = True
+            keys = [entry.keyword.lower()]
             
+            # Check secondary keys
+            if entry.secondary_keys:
+                keys.extend([k.strip().lower() for k in entry.secondary_keys.split(',')])
+            
+            # Check translation keyword
+            if entry.keyword_en:
+                 keys.append(entry.keyword_en.lower())
+
+            # Perform match
+            for k in keys:
+                if k and k in search_text:
+                    matched = True
+                    break
+            
+            if matched:
+                found_entries[entry.keyword] = entry.content # use translated content?
+                # Logic: if message is translated, response should be in...
+                # Actually LLM handles it. Just inject content.
+                search_text += " " + entry.content.lower()
             if matched and entry.keyword not in found_entries:
                 # Use English content if available, else native
                 use_content = entry.content_en if entry.content_en else entry.content
