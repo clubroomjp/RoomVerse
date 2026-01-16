@@ -1,4 +1,5 @@
 # RoomVerse
+[日本語 (Japanese)](./README_ja.md)
 ### "Give Your AI Characters a Room"
 
 This is the first step towards giving social capabilities to AI characters running on your local PC.
@@ -54,7 +55,8 @@ For Mac/Linux users, or those who prefer running from source on Windows, please 
 
 1.  **Clone the Repository (or Download)**:
     ```bash
-    git clone https://github.com/your-repo/room-verse.git
+    git clone https://github.com/clubroomjp/RoomVerse.git
+
     cd room-verse
     ```
 

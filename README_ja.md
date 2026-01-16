@@ -54,7 +54,8 @@ MacやLinuxユーザーの方、またはWindowsでソースコードから直�
 
 1.  **リポジトリのクローン（またはダウンロード）**:
     ```bash
-    git clone https://github.com/your-repo/room-verse.git
+    git clone https://github.com/clubroomjp/RoomVerse.git
+
     cd room-verse
     ```
 
