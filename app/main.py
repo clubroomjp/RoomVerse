@@ -442,7 +442,6 @@ async def save_lore_entry(entry: LoreEntryRequest):
             existing.content = entry.content
             existing.source = entry.source
             if kw_en: existing.keyword_en = kw_en
-            if kw_en: existing.keyword_en = kw_en
             if cnt_en: existing.content_en = cnt_en
             # V2 Update
             existing.book = entry.book
@@ -450,7 +449,6 @@ async def save_lore_entry(entry: LoreEntryRequest):
             existing.constant = entry.constant
             existing.enabled = entry.enabled
             session.add(existing)
-        else:
         else:
             new_entry = LoreEntry(
                 keyword=entry.keyword, 
