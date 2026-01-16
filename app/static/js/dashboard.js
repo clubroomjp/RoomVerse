@@ -906,6 +906,11 @@ let loreState = {
 };
 
 async function openLorebookManager() {
+    // Close other modals to prevent z-index issues
+    if (typeof closeCharacterCardModal === "function") closeCharacterCardModal();
+    if (typeof closeTeachModal === "function") closeTeachModal();
+    if (typeof closeProfileModal === "function") closeProfileModal();
+
     document.getElementById('lorebook-manager-modal').classList.remove('hidden');
     await loadLorebookBooks();
     await loadLorebookEntries();
