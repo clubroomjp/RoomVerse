@@ -274,7 +274,7 @@ const i18n = {
         create_new: "新規作成",
         create_add: "カード追加",
         lbl_additional_instructions: "追加の指示 (Additional Instructions)",
-        active_card_label: "使用中のカード: ",
+        active_card_label: "カード: ",
         view_profile: "プロフィール",
     }
 };
@@ -527,7 +527,7 @@ function updateTexts(lang) {
     if (activeCardDisplay && !activeCardDisplay.classList.contains('hidden') && state.config && state.config.character) {
         // Re-construct text using current lang
         // active_card_label key check
-        const prefix = texts.active_card_label || (lang === 'ja' ? "使用中のカード: " : "Active Card: ");
+        const prefix = texts.active_card_label || (lang === 'ja' ? "カード: " : "Active Card: ");
 
         let text = prefix + state.config.character.name;
 
@@ -1209,6 +1209,7 @@ async function setActiveLorebook() {
     const current = loreState.currentBook;
     state.config.character.active_lorebook = current;
     updateActiveLorebookBadge();
+    updateTexts(state.lang); // Refresh Header Badge (Card | Book)
     saveConfig(); // Persist
 }
 
