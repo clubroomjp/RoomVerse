@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, Query, UploadFile, File
+from fastapi import FastAPI, HTTPException, Header, Depends, Query, UploadFile, File, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -945,7 +945,7 @@ async def get_room_status():
     }
 
 @app.post("/api/host/chat")
-async def host_chat(request: HostChatRequest, session: Session = Depends(get_session)):
+async def host_chat(request: HostChatRequest, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     """
     Endpoint for the Host User to send a message to the room.
     """
@@ -962,7 +962,56 @@ async def host_chat(request: HostChatRequest, session: Session = Depends(get_ses
     # For now, this just adds to the room log/context.
     
     print(f"[HOST]: {safe_msg}")
+    
+    # Trigger AI Reply
+    background_tasks.add_task(process_host_reply, safe_msg)
+    
     return {"status": "sent", "message": safe_msg}
+
+def process_host_reply(message: str):
+    """
+    Background task to generate AI response for Host.
+    """
+    try:
+        # 1. Build Context from Room History (Last 10 messages)
+        # We need to filter for LLM format
+        recent_history = room_manager.chat_history[-10:] 
+        llm_context = []
+        for msg in recent_history:
+            # Skip the message we just added (the host message is already in history? Yes)
+            # Actually, `generate_response` takes `message` as the current user prompt.
+            # So context should be PREVIOUS messages.
+            # But the host message IS the trigger.
+            # Let's just exclude the very last one if it matches our message ID/timestamp?
+            # Or simpler: passing `context` to `generate_response` just appends it before the last user message.
+            
+            role = "user" if msg["is_human"] or msg["sender_id"] != config.instance_id else "assistant"
+            # If msg is the one we just sent...
+            # The `generate_response` logic:
+            # messages.extend(context)
+            # messages.append({"role": "user", "content": message})
+            
+            # If the last message in chat_history IS `message` (the user input),
+            # we should NOT include it in `context` to avoid duplication.
+            
+            if msg["content"] == message and msg["sender_name"] == "Host":
+                continue # Skip the current message from context
+            
+            llm_context.append({"role": role, "content": msg["content"]})
+
+        # 2. Generate
+        reply = llm_client.generate_response(
+            visitor_name="Host",
+            message=message,
+            context=llm_context, 
+            relationship_context="You are speaking with the Host (Owner) of this room."
+        )
+        
+        # 3. Post
+        room_manager.add_message(config.instance_id, config.character.name, reply, model=config.llm.model)
+        
+    except Exception as e:
+        print(f"Error in process_host_reply: {e}")
 
 
 PORT = 22022
