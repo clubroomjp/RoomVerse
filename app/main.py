@@ -619,10 +619,26 @@ async def get_card():
     """
     Return the character card/profile.
     """
+    # Try to get active card from DB
+    if config.character.active_card_id:
+        with get_session_wrapper() as session:
+             from app.core.database import CharacterCard
+             card = session.get(CharacterCard, config.character.active_card_id)
+             if card:
+                 # Ensure instance_id is included (it's not in DB model, but response needs it maybe? 
+                 # Wait, response_model is CharacterCard (SQLModel). It doesn't have instance_id field.
+                 # The previous code injected it but CharacterCard definition (Lines 38-52 in database.py) does NOT have instance_id.
+                 # So the previous code was probably failing validation or Pydantic was ignoring extras?
+                 # Actually, if I return a DB model, it validates against DB model.
+                 return card
+    
+    # Fallback to config
     return CharacterCard(
         name=config.character.name,
-        description=config.character.persona, # Simple mapping for now
-        instance_id=config.instance_id
+        description=config.character.persona, # Fallback
+        personality=config.character.system_prompt,
+        # instance_id is not in CharacterCard model, so we can't return it here unless we change valid schema.
+        # But for viewing, we just need name/desc/image.
     )
 
 @app.post("/leave")

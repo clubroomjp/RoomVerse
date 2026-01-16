@@ -58,7 +58,7 @@ const i18n = {
         help_llm_url: "Base URL for API (e.g. https://api.openai.com/v1).",
         help_char_name: "Name displayed to visitors.",
         help_char_persona: "Personality instructions (Takes priority over cards).",
-        help_sys_prompt: "Base behavior rules.",
+        help_sys_prompt: "Base behavior rules (Takes priority over cards).",
         help_trans_enable: "Real-time translation of incoming/outgoing messages.",
         help_max_turns: "Agent ends conversation after this many exchanges.",
         help_trans_enable: "Real-time translation of incoming/outgoing messages.",
@@ -185,7 +185,7 @@ const i18n = {
         help_llm_url: "APIのベースURL（例: https://api.openai.com/v1）",
         help_char_name: "訪問者に表示されるAIの名前",
         help_char_persona: "AIの性格や振る舞い（カードより優先されます）",
-        help_sys_prompt: "根本的な動作ルール",
+        help_sys_prompt: "根本的な動作ルール（カードより優先されます）",
         help_trans_enable: "送受信メッセージを英語に変換し、英語モデルと日本語で会話できるようになります",
         help_max_turns: "この回数だけ会話を往復すると相手のAIは帰還します",
         help_api_key: "任意の文字列を設定して、共有したいユーザーにだけ伝えてください",
@@ -258,7 +258,8 @@ const i18n = {
         create_new: "新規作成",
         create_add: "カード追加",
         lbl_additional_instructions: "追加の指示 (Additional Instructions)",
-        active_card_label: "使用中のカード: "
+        active_card_label: "使用中のカード: ",
+        view_profile: "プロフィール",
     }
 };
 
