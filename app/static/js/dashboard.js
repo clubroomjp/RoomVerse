@@ -91,13 +91,20 @@ const i18n = {
         submit: "Submit",
 
         // Lore
-        tab_lore: "Lore",
-        lore_title: "Lorebook (World Info)",
-        add_lore: "Add Entry",
-        lore_keyword: "Keyword",
-        lore_content: "Description / Definition",
-        lore_modal_title: "Edit Lore",
+        tab_lore: "Lore", // Legacy
+        lorebook_btn: "Lorebook",
+        lore_manager_title: "Lorebook Manager",
+        lore_active_label: "Active:",
+        lore_set_active: "Set Current",
+        lore_new_entry: "New Entry",
+        lore_edit_title: "Edit Entry",
+        lore_enabled: "Enabled",
+        lore_constant: "Constant",
+        lore_keyword_label: "Primary Keyword (ID)",
+        lore_secondary_label: "Secondary Keys (CSV)",
+        lore_content_label: "Content",
         lore_select_hint: "Select an entry to view/edit",
+        delete: "Delete",
         save_btn: "Save",
 
         // Character Card
@@ -215,13 +222,20 @@ const i18n = {
         submit: "送信",
 
         // Lore
-        tab_lore: "辞書",
-        lore_title: "辞書 (Lorebook)",
-        add_lore: "追加",
-        lore_keyword: "キーワード",
-        lore_content: "説明・定義",
-        lore_modal_title: "用語の編集",
-        lore_select_hint: "項目を選択して編集",
+        tab_lore: "辞書", // Legacy
+        lorebook_btn: "辞書",
+        lore_manager_title: "辞書マネージャー",
+        lore_active_label: "アクティブ:",
+        lore_set_active: "使用する",
+        lore_new_entry: "新規エントリ",
+        lore_edit_title: "エントリ編集",
+        lore_enabled: "有効",
+        lore_constant: "常時有効",
+        lore_keyword_label: "キーワード (必須)",
+        lore_secondary_label: "追加キーワード (カンマ区切り)",
+        lore_content_label: "内容",
+        lore_select_hint: "エントリを選択または作成してください",
+        delete: "削除",
         save_btn: "保存",
 
         // Character Card

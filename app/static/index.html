@@ -92,16 +92,18 @@
                                     data-i18n="char_settings">
                                     Character Settings</h2>
                                 <!-- Old Button Removed -->
-                                <button onclick="openCharacterCardModal()"
-                                    class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-all flex items-center gap-1">
-                                    <i class="fas fa-id-card"></i>
-                                    <span data-i18n="character_card">Card</span>
-                                </button>
-                                <button onclick="openLorebookManager()"
-                                    class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-all flex items-center gap-1">
-                                    <i class="fas fa-book-img"></i>
-                                    <span>Lorebook</span>
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="openCharacterCardModal()"
+                                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-all flex items-center gap-1">
+                                        <i class="fas fa-id-card"></i>
+                                        <span data-i18n="character_card">Card</span>
+                                    </button>
+                                    <button onclick="openLorebookManager()"
+                                        class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-all flex items-center gap-1">
+                                        <i class="fas fa-book"></i>
+                                        <span data-i18n="lorebook_btn">Lorebook</span>
+                                    </button>
+                                </div>
                             </div>
                             <!-- Active Card Badge (New Line) -->
                             <div class="mt-2 min-h-[5px]">
@@ -538,7 +540,8 @@
             <div
                 class="p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Lorebook Manager</h3>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white" data-i18n="lore_manager_title">Lorebook
+                        Manager</h3>
                     <select id="lorebook-select" onchange="loadLorebookEntries()"
                         class="bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-sm outline-none text-slate-800 dark:text-white">
                         <option value="Default">Default</option>
@@ -548,10 +551,11 @@
                     </button>
                     <!-- Active Book Switch -->
                     <div class="flex items-center gap-2 ml-4">
-                        <label class="text-xs text-slate-500">Active:</label>
+                        <label class="text-xs text-slate-500" data-i18n="lore_active_label">Active:</label>
                         <span id="active-lorebook-badge"
                             class="px-2 py-0.5 rounded bg-green-500/10 text-green-500 text-xs border border-green-500/20">Default</span>
-                        <button onclick="setActiveLorebook()" class="text-xs text-blue-500 hover:underline">Set
+                        <button onclick="setActiveLorebook()" class="text-xs text-blue-500 hover:underline"
+                            data-i18n="lore_set_active">Set
                             Current</button>
                     </div>
                 </div>
@@ -568,7 +572,7 @@
                     <div class="p-2 border-b border-slate-200 dark:border-slate-700">
                         <button onclick="openLoreEntryEditor(null)"
                             class="w-full py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition">
-                            <i class="fas fa-plus mr-1"></i> New Entry
+                            <i class="fas fa-plus mr-1"></i> <span data-i18n="lore_new_entry">New Entry</span>
                         </button>
                     </div>
                     <div id="lore-manager-list" class="flex-1 overflow-y-auto p-2 space-y-1">
@@ -580,50 +584,58 @@
                 <div class="w-2/3 p-6 flex flex-col bg-slate-50 dark:bg-[#0f172a] overflow-y-auto">
                     <div id="lore-editor-container" class="hidden space-y-4">
                         <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-bold text-slate-700 dark:text-slate-300">Edit Entry</h4>
+                            <h4 class="font-bold text-slate-700 dark:text-slate-300" data-i18n="lore_edit_title">Edit
+                                Entry</h4>
                             <div class="flex gap-2">
                                 <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
                                     <input type="checkbox" id="lore-edit-enabled"
                                         class="rounded text-blue-600 focus:ring-purple-500 bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600">
-                                    <span class="text-slate-600 dark:text-slate-400">Enabled</span>
+                                    <span class="text-slate-600 dark:text-slate-400"
+                                        data-i18n="lore_enabled">Enabled</span>
                                 </label>
                                 <label class="flex items-center gap-1 text-xs cursor-pointer select-none">
                                     <input type="checkbox" id="lore-edit-constant"
                                         class="rounded text-blue-600 focus:ring-purple-500 bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600">
-                                    <span class="text-slate-600 dark:text-slate-400">Constant (Always Active)</span>
+                                    <span class="text-slate-600 dark:text-slate-400" data-i18n="lore_constant">Constant
+                                        (Always Active)</span>
                                 </label>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Primary Keyword (ID)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1"
+                                data-i18n="lore_keyword_label">Primary Keyword (ID)</label>
                             <input type="text" id="lore-edit-keyword"
                                 class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 text-sm outline-none">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Secondary Keys (CSV)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1"
+                                data-i18n="lore_secondary_label">Secondary Keys (CSV)</label>
                             <input type="text" id="lore-edit-secondary" placeholder="alias1, alias2..."
                                 class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 text-sm outline-none">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Content</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1"
+                                data-i18n="lore_content_label">Content</label>
                             <textarea id="lore-edit-content" rows="10"
                                 class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded p-2 text-sm outline-none font-sans leading-relaxed"></textarea>
                         </div>
 
                         <div class="flex justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
                             <button onclick="deleteLoreEntry()"
-                                class="text-red-500 hover:text-red-400 text-xs font-bold">Delete</button>
+                                class="text-red-500 hover:text-red-400 text-xs font-bold"
+                                data-i18n="delete">Delete</button>
                             <button onclick="saveLoreEntryV2()"
-                                class="px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-bold shadow transition">Save</button>
+                                class="px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-bold shadow transition"
+                                data-i18n="save_btn">Save</button>
                         </div>
                     </div>
                     <div id="lore-editor-placeholder"
                         class="flex-1 flex flex-col justify-center items-center text-slate-400 opacity-50">
                         <i class="fas fa-book-open text-6xl mb-4"></i>
-                        <p>Select or Create an entry</p>
+                        <p data-i18n="lore_select_hint">Select or Create an entry</p>
                     </div>
                 </div>
             </div>
