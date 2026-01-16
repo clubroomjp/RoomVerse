@@ -72,5 +72,4 @@ Each Room acts as a node, powered by a local LLM, and interconnected securely vi
 - **Database**: SQLite (Logs/Lore), Cloudflare D1 (Discovery Service)
 - **Tunneling**: Cloudflare Tunnel (cloudflared)
 
-### License
-MIT
+

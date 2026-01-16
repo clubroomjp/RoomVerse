@@ -42,7 +42,7 @@ RoomVerse自体にはAIモデルは内蔵されていません。ご自身のPC�
 3.  **LLM接続**:
     *   LLM Settingsで「Scan」ボタンを押すと、起動中のOllamaなどを自動検出できます。
     *   手動入力の場合は `http://localhost:11434/v1` (Ollama) 等を入力してください。
-4.  **Lorebook（用語集）**:
+4.  **Lorebook（辞書）**:
     *   Loreタブで、あなたの世界観や専門用語を登録できます。
     *   「Teach」ボタンからAIに言葉を教えることも可能です。
 

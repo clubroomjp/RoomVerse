@@ -7,7 +7,7 @@ from sqlmodel import Session
 from app.core.llm import llm_client
 from app.core.config import config, Config, save_config
 from app.core.translator import translator
-from app.core.database import create_db_and_tables, get_session, log_visit, get_relationship, ConversationLog, LoreEntry
+from app.core.database import create_db_and_tables, get_session, log_visit, get_relationship, ConversationLog, LoreEntry, CharacterCard
 
 from contextlib import asynccontextmanager
 from app.core.tunnel import start_tunnel
@@ -426,6 +426,98 @@ async def save_lore_entry(entry: LoreEntryRequest):
             session.add(new_entry)
         session.commit()
     return {"status": "saved", "keyword": entry.keyword}
+
+# --- Character Card API ---
+
+class CardCreate(BaseModel):
+    name: str
+    description: str | None = None
+    personality: str | None = None
+    scenario: str | None = None
+    first_mes: str | None = None
+    mes_example: str | None = None
+    creator_notes: str | None = None
+    system_prompt: str | None = None
+    tags: str | None = None
+    creator: str | None = None
+    character_version: str | None = None
+
+@app.get("/api/cards")
+async def get_cards():
+    """List all character cards."""
+    with get_session_wrapper() as session:
+        from sqlmodel import select
+        cards = session.exec(select(CharacterCard)).all()
+        return cards
+
+@app.post("/api/cards")
+async def create_card(card: CardCreate):
+    """Create a new character card."""
+    with get_session_wrapper() as session:
+        new_card = CharacterCard(**card.model_dump())
+        session.add(new_card)
+        session.commit()
+        session.refresh(new_card)
+        return new_card
+
+@app.put("/api/cards/{card_id}")
+async def update_card(card_id: int, card_data: CardCreate):
+    """Update a character card."""
+    with get_session_wrapper() as session:
+        card = session.get(CharacterCard, card_id)
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        card_dict = card_data.model_dump(exclude_unset=True)
+        for key, value in card_dict.items():
+            setattr(card, key, value)
+            
+        session.add(card)
+        session.commit()
+        session.refresh(card)
+        return card
+
+@app.delete("/api/cards/{card_id}")
+async def delete_card(card_id: int):
+    """Delete a character card."""
+    with get_session_wrapper() as session:
+        card = session.get(CharacterCard, card_id)
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        # If active, unset active
+        if config.character.active_card_id == card_id:
+            config.character.active_card_id = None
+            save_config(config)
+            
+        session.delete(card)
+        session.commit()
+        return {"status": "deleted", "id": card_id}
+
+@app.post("/api/cards/{card_id}/activate")
+async def activate_card(card_id: int):
+    """Set a card as active."""
+    with get_session_wrapper() as session:
+        card = session.get(CharacterCard, card_id)
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        # Update config
+        config.character.active_card_id = card_id
+        # Also auto-update character name? User might want to keep custom name.
+        # Decision: Sync name to keep consistency, but maybe user wants override.
+        # For now, just link ID. Logic will use Card Name if linked.
+        config.character.name = card.name 
+        save_config(config)
+        return {"status": "activated", "card": card}
+
+@app.post("/api/cards/deactivate")
+async def deactivate_card():
+    """Unset active card."""
+    config.character.active_card_id = None
+    save_config(config)
+    return {"status": "deactivated"}
+
 
 @app.delete("/api/lore/{keyword}")
 async def delete_lore_entry(keyword: str):

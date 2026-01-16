@@ -113,7 +113,28 @@ const i18n = {
         preview_name: "Name",
         preview_persona: "Description / Persona",
         preview_system: "System Prompt",
-        apply_import: "Apply Import"
+        apply_import: "Apply Import",
+
+        // Card Manager
+        card_manager_title: "Character Cards",
+        tab_library: "Library",
+        tab_editor: "Editor",
+        tab_import: "Import",
+        btn_activate: "Activate",
+        btn_deactivate: "Deactivate",
+        btn_save_card: "Save Card",
+        label_creator: "Creator",
+        label_description: "Description",
+        label_personality: "Personality",
+        label_scenario: "Scenario",
+        label_first_mes: "First Message",
+        label_mes_example: "Message Examples",
+        label_system_prompt: "Card System Prompt",
+        no_cards: "No cards found.",
+        create_new: "Create New",
+        create_add: "Add Card",
+        lbl_additional_instructions: "Additional Instructions",
+        active_card_label: "Active Card: "
     },
     ja: {
         subtitle: "AIノード管理",
@@ -195,8 +216,8 @@ const i18n = {
         submit: "送信",
 
         // Lore
-        tab_lore: "用語集",
-        lore_title: "用語集 (Lorebook)",
+        tab_lore: "辞書",
+        lore_title: "辞書 (Lorebook)",
         add_lore: "追加",
         lore_keyword: "キーワード",
         lore_content: "説明・定義",
@@ -217,7 +238,28 @@ const i18n = {
         preview_name: "名前",
         preview_persona: "説明 / ペルソナ",
         preview_system: "システムプロンプト",
-        apply_import: "インポートを適用"
+        apply_import: "インポートを適用",
+
+        // Card Manager
+        card_manager_title: "キャラクターカード管理",
+        tab_library: "ライブラリ",
+        tab_editor: "エディタ",
+        tab_import: "インポート",
+        btn_activate: "使用する",
+        btn_deactivate: "使用解除",
+        btn_save_card: "カードを保存",
+        label_creator: "作成者",
+        label_description: "説明 (Description)",
+        label_personality: "性格 (Personality)",
+        label_scenario: "シナリオ (Scenario)",
+        label_first_mes: "最初の挨拶 (First Message)",
+        label_mes_example: "会話例 (Mes Example)",
+        label_system_prompt: "カード専用プロンプト",
+        no_cards: "カードがありません。",
+        create_new: "新規作成",
+        create_add: "カード追加",
+        lbl_additional_instructions: "追加の指示 (Additional Instructions)",
+        active_card_label: "使用中のカード: "
     }
 };
 
@@ -437,6 +479,28 @@ async function loadConfig() {
 
         // Fill Forms
         document.getElementById('char-name').value = config.character.name || "";
+        document.getElementById('char-name').value = config.character.name || "";
+
+        // Handle Active Card UI
+        const personaLabel = document.querySelector('label[data-i18n="char_persona"]');
+        const activeCardDisplay = document.getElementById('active-card-display');
+
+        if (config.character.active_card_id) {
+            // Card Mode
+            if (personaLabel) personaLabel.innerText = i18n[state.lang].lbl_additional_instructions || "Additional Instructions";
+            if (activeCardDisplay) {
+                // We assume config.character.name matches card name for now, or we fetch card details?
+                // Ideally API returns active card name. But for now we just show "Active"
+                // Actually config.character.name is synced.
+                activeCardDisplay.innerText = (i18n[state.lang].active_card_label || "Active: ") + config.character.name;
+                activeCardDisplay.classList.remove('hidden');
+            }
+        } else {
+            // Normal Mode
+            if (personaLabel) personaLabel.innerText = i18n[state.lang].char_persona || "Persona";
+            if (activeCardDisplay) activeCardDisplay.classList.add('hidden');
+        }
+
         document.getElementById('char-persona').value = config.character.persona || "";
         document.getElementById('char-prompt').value = config.character.system_prompt || "";
         document.getElementById('llm-model').value = config.llm.model || "";

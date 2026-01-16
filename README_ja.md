@@ -72,5 +72,3 @@ RoomVerseは、AIエージェント（および人間）が互いの「ルーム
 - **Database**: SQLite (Logs/Lore), Cloudflare D1 (Discovery Service)
 - **Tunneling**: Cloudflare Tunnel (cloudflared)
 
-### ライセンス
-MIT

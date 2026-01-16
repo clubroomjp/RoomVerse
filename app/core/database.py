@@ -35,6 +35,21 @@ class LoreEntry(SQLModel, table=True):
     source: str = Field(default="host") # "host" or "visitor"
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
+class CharacterCard(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    description: Optional[str] = None # Description
+    personality: Optional[str] = None # Personality
+    scenario: Optional[str] = None # Scenario
+    first_mes: Optional[str] = None # First Message
+    mes_example: Optional[str] = None # Message Examples
+    creator_notes: Optional[str] = None
+    system_prompt: Optional[str] = None # Card specific system prompt
+    tags: Optional[str] = None # JSON list or comma separated
+    creator: Optional[str] = None
+    character_version: Optional[str] = None
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+
 # --- Database Connection ---
 
 sqlite_file_name = "logs.sqlite"

@@ -17,12 +17,43 @@ class LLMClient:
         """
         Generates a response from the host character.
         """
-        system_prompt = (
-            f"You are {self.character.name}.\n"
-            f"Persona: {self.character.persona}\n"
-            f"{self.character.system_prompt}\n"
-            f"You are currently talking to a visitor named {visitor_name}.\n"
-        )
+        system_prompt = ""
+        
+        # Check for Active Card
+        if self.character.active_card_id:
+            try:
+                from app.core.database import engine, CharacterCard
+                from sqlmodel import Session
+                with Session(engine) as session:
+                    card = session.get(CharacterCard, self.character.active_card_id)
+                    if card:
+                         system_prompt = (
+                             f"You are {card.name}.\n"
+                             f"[Description]\n{card.description}\n"
+                             f"[Personality]\n{card.personality}\n"
+                             f"[Scenario]\n{card.scenario}\n"
+                             f"[Message Examples]\n{card.mes_example}\n"
+                             f"{card.system_prompt or ''}\n"
+                         )
+                         if self.character.persona:
+                             system_prompt += f"\n[Additional Instructions]\n{self.character.persona}\n"
+                         
+                         # Keep global system prompt as well? Maybe usually redundant if card has one.
+                         # But let's append it as "System Rules"
+                         if self.character.system_prompt:
+                              system_prompt += f"\n[System Rules]\n{self.character.system_prompt}\n"
+            except Exception as e:
+                print(f"Error loading card: {e}")
+        
+        if not system_prompt:
+            # Fallback or No Card
+            system_prompt = (
+                f"You are {self.character.name}.\n"
+                f"Persona: {self.character.persona}\n"
+                f"{self.character.system_prompt}\n"
+            )
+
+        system_prompt += f"You are currently talking to a visitor named {visitor_name}.\n"
         
         if relationship_context:
             system_prompt += f"\n[Relationship Context]\n{relationship_context}\n"
