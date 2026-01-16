@@ -1111,8 +1111,12 @@ function renderLogMessages(messages) {
         const div = document.createElement('div');
         div.className = `flex ${alignClass}`;
         div.innerHTML = `
-            <div class="max-w-[80%] ${bubbleClass} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
-                ${msg.message}
+            <div class="flex flex-col ${isHost ? 'items-end' : 'items-start'} max-w-[80%]">
+                <span class="text-xs text-slate-400 mb-1 mx-1">${msg.sender_name || (isHost ? 'Host' : 'Visitor')}</span>
+                <div class="${bubbleClass} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
+                    ${msg.message}
+                    ${msg.model ? `<div class="mt-1 text-[10px] opacity-60 font-mono text-right">${msg.model}</div>` : ''}
+                </div>
             </div>
         `;
         container.appendChild(div);
