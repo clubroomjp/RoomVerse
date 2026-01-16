@@ -103,11 +103,7 @@ class ChatResponse(BaseModel):
 class HostChatRequest(BaseModel):
     message: str
 
-class CharacterCard(BaseModel):
-    name: str
-    description: str
-    instance_id: str
-    # Add other fields as needed (e.g. topics, gender, etc.)
+
 
 @app.get("/")
 async def root():
