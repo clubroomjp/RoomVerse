@@ -3,7 +3,7 @@
  * Handles SillyTavern/Chub V2 format PNG character cards
  */
 
-(function() {
+(function () {
     'use strict';
 
     // State for the module
@@ -13,7 +13,7 @@
     const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     // CRC32 table for PNG chunk validation
-    const crcTable = (function() {
+    const crcTable = (function () {
         const table = new Uint32Array(256);
         for (let i = 0; i < 256; i++) {
             let c = i;
@@ -34,7 +34,7 @@
     }
 
     // Initialize modal content on DOM ready
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         initCharacterCardModal();
     });
 
@@ -129,7 +129,15 @@
 
         // Update i18n if available
         if (typeof updateTexts === 'function') {
-            updateTexts();
+            // Try to get current language from global state or DOM
+            let currentLang = 'en';
+            if (typeof state !== 'undefined' && state.lang) {
+                currentLang = state.lang;
+            } else {
+                const sel = document.getElementById('lang-select');
+                if (sel) currentLang = sel.value;
+            }
+            updateTexts(currentLang);
         }
     }
 
@@ -457,22 +465,44 @@
         result.set(pngData.slice(0, iendPos), 0);
         result.set(chunk, iendPos);
         result.set(pngData.slice(iendPos), iendPos + chunk.length);
-
         return result;
     }
 
     // Global functions
-    window.openCharacterCardModal = function() {
+    window.openCharacterCardModal = function () {
+        console.log('[CharCard] openCharacterCardModal called');
         const modal = document.getElementById('character-card-modal');
         if (modal) {
             modal.classList.remove('hidden');
             // Reset preview
             document.getElementById('card-preview')?.classList.add('hidden');
             parsedCardData = null;
+
+            // Force update i18n
+            console.log('[CharCard] Checking for updateTexts function...');
+            if (typeof window.updateTexts === 'function') {
+                let currentLang = 'en';
+                // Try reading from DOM first as it is source of truth for UI
+                const sel = document.getElementById('lang-select');
+                if (sel) {
+                    currentLang = sel.value;
+                    console.log('[CharCard] Detected lang from dropdown:', currentLang);
+                } else if (typeof state !== 'undefined' && state.lang) {
+                    currentLang = state.lang;
+                    console.log('[CharCard] Detected lang from state:', currentLang);
+                }
+
+                console.log('[CharCard] Calling updateTexts with:', currentLang);
+                window.updateTexts(currentLang);
+            } else {
+                console.error('[CharCard] updateTexts function not found!');
+            }
+        } else {
+            console.error('[CharCard] Modal not found!');
         }
     };
 
-    window.closeCharacterCardModal = function() {
+    window.closeCharacterCardModal = function () {
         const modal = document.getElementById('character-card-modal');
         if (modal) {
             modal.classList.add('hidden');
@@ -483,7 +513,7 @@
     window.applyImportedCard = applyImportedCard;
 
     // Close modal on backdrop click
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const modal = document.getElementById('character-card-modal');
         if (e.target === modal) {
             closeCharacterCardModal();

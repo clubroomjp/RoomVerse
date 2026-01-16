@@ -283,13 +283,54 @@ function toggleTheme() {
     switchTab(currentTab);
 }
 
+// --- Exports ---
+window.state = state;
+window.i18n = i18n;
+window.updateTexts = updateTexts;
+window.switchTab = switchTab;
+window.toggleTheme = toggleTheme;
+
+// --- Init ---
+document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
+
+    // Theme Init
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    state.theme = savedTheme;
+    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+    else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.getElementById('theme-toggle').innerText = '☀️';
+    }
+    switchTab('dashboard');
+
+    // Language Init
+    const savedLang = localStorage.getItem('lang') || 'en';
+    document.getElementById('lang-select').value = savedLang;
+    updateTexts(savedLang);
+});
+
 // --- I18n ---
 function updateTexts(lang) {
+    console.log('[Dashboard] updateTexts called with:', lang);
     state.lang = lang;
     const texts = i18n[lang];
-    document.querySelectorAll('[data-i18n]').forEach(el => {
+    if (!texts) {
+        console.error('[Dashboard] No texts found for lang:', lang);
+        return;
+    }
+
+    const elements = document.querySelectorAll('[data-i18n]');
+    console.log('[Dashboard] Found i18n elements:', elements.length);
+
+    elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (texts[key]) el.innerText = texts[key];
+        if (texts[key]) {
+            el.innerText = texts[key];
+        } else {
+            console.warn('[Dashboard] Missing key:', key);
+        }
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
