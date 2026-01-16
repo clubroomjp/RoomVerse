@@ -2,35 +2,66 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Virtual Environment
-venv/
+*.so
+.Python
 env/
-.env
-
-# RoomVerse Data
-app/config.json
-logs.sqlite
-*.db
-*.sqlite
-
-# Character Cards
-app/static/cards/*.png
-
-# Cloudflare Tunnel
-cloudflared.exe
-cloudflared-windows-amd64.exe
-
-# Node.js / Discovery Service
-node_modules/
-.wrangler/
-package-lock.json
-
-# Build / Distribution
 build/
+develop-eggs/
 dist/
-*.spec
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# IDEs
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Editors
 .vscode/
 .idea/
+*.swp
+
+# RoomVerse Local Data
+logs.sqlite
+app/config.json
+temp_payload.json
+*.log
+
+# Dependencies & Binaries
+node_modules/
+.wrangler/
+cloudflared
+cloudflared.exe
+
+# User Content
+app/static/cards/*.png
