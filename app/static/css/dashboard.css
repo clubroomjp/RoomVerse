@@ -38,3 +38,23 @@ body {
 .group:hover .tooltip-content {
     display: block;
 }
+
+/* Character Card Drop Zone */
+#drop-zone.drag-over {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Anime Fade In */
+.anime-fade-in {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

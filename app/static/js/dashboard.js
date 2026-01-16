@@ -98,7 +98,22 @@ const i18n = {
         lore_content: "Description / Definition",
         lore_modal_title: "Edit Lore",
         lore_select_hint: "Select an entry to view/edit",
-        save_btn: "Save"
+        save_btn: "Save",
+
+        // Character Card
+        character_card: "Card",
+        character_card_title: "Character Card",
+        card_import: "Import",
+        card_export: "Export",
+        drop_zone_text: "Drag & Drop PNG here\nor click to select",
+        card_format_hint: "Supports SillyTavern/Chub V2 format",
+        export_desc: "Export current character settings as a PNG character card.",
+        export_btn: "Export PNG",
+        card_preview: "Preview",
+        preview_name: "Name",
+        preview_persona: "Description / Persona",
+        preview_system: "System Prompt",
+        apply_import: "Apply Import"
     },
     ja: {
         subtitle: "AIノード管理",
@@ -187,7 +202,22 @@ const i18n = {
         lore_content: "説明・定義",
         lore_modal_title: "用語の編集",
         lore_select_hint: "項目を選択して編集",
-        save_btn: "保存"
+        save_btn: "保存",
+
+        // Character Card
+        character_card: "カード",
+        character_card_title: "キャラクターカード",
+        card_import: "インポート",
+        card_export: "エクスポート",
+        drop_zone_text: "PNGをドラッグ＆ドロップ\nまたはクリックして選択",
+        card_format_hint: "SillyTavern/Chub V2形式対応",
+        export_desc: "現在のキャラクター設定をPNGカードとしてエクスポートします。",
+        export_btn: "PNGをダウンロード",
+        card_preview: "プレビュー",
+        preview_name: "名前",
+        preview_persona: "説明 / ペルソナ",
+        preview_system: "システムプロンプト",
+        apply_import: "インポートを適用"
     }
 };
 
