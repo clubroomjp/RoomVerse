@@ -951,7 +951,8 @@ async def host_chat(request: HostChatRequest, session: Session = Depends(get_ses
     """
     # Sanitize and add to room manager
     safe_msg = room_manager.sanitize(request.message)
-    room_manager.add_message("HOST", config.character.name, safe_msg, is_human=True)
+    # Use "Host" as name for human user, not character name
+    room_manager.add_message("HOST", "Host", safe_msg, is_human=True)
     
     # Log to DB (Special visitor_id for host?)
     # For now, we might just log it as a system event or associated with a 'HOST' session
