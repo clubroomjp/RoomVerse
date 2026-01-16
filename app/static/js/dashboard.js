@@ -1388,7 +1388,7 @@ function renderLogMessages(messages) {
         // Sender Name Display
         let displayName = msg.sender_name || 'Unknown';
         if (msg.sender === 'host') displayName = 'Host'; // Force 'Host' for Human
-        if (msg.sender === 'ai') displayName = state.charName; // Force CharName for AI (if missing)
+        if (msg.sender === 'ai') displayName = (state.config && state.config.character && state.config.character.name) ? state.config.character.name : 'AI'; // Force CharName
 
         const alignClass = isRight ? 'justify-end' : 'justify-start';
         const bubbleStyle = isRight
@@ -1400,10 +1400,7 @@ function renderLogMessages(messages) {
         div.innerHTML = `
             <div class="flex flex-col ${isRight ? 'items-end' : 'items-start'} max-w-[80%]">
                 <span class="text-xs text-slate-400 mb-1 mx-1">${displayName}</span>
-                <div class="${bubbleStyle} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
-                    ${msg.message}
-                    ${msg.model ? `<div class="mt-1 text-[10px] opacity-60 font-mono text-right">${msg.model}</div>` : ''}
-                </div>
+                <div class="${bubbleStyle} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">${msg.message}${msg.model ? `<div class="mt-1 text-[10px] opacity-60 font-mono text-right">${msg.model}</div>` : ''}</div>
             </div>
         `;
         container.appendChild(div);
