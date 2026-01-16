@@ -318,9 +318,17 @@ async def get_log_messages(session_id: str):
         
         for msg in results:
             sender_name = "Unknown"
+            
             if msg.sender == "host":
+                # Only use Character Name if it's actually the AI speaking?
+                # No, "host" in DB means the Human Host (me).
+                sender_name = "Host" # Or "You"
+            elif msg.sender == "ai":
+                # exact sender "ai" means the Agent
                 sender_name = config.character.name
             else:
+                # "visitor" or anything else
+                if msg.visitor_id in visitor_cache:
                 if msg.visitor_id in visitor_cache:
                     sender_name = visitor_cache[msg.visitor_id]
                 else:
@@ -783,7 +791,7 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
         log_out = database.ConversationLog(
             session_id=temp_session_id, 
             visitor_id=request.visitor_id, 
-            sender="host", 
+            sender="ai", 
             message=room_manager.sanitize(display_response) # Save TRANSLATED
         )
         session.add(log_out)

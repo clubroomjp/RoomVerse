@@ -1101,19 +1101,30 @@ function renderLogMessages(messages) {
     // Sort by timestamp just in case
     // messages.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+    // Determine context (Host Session vs Visitor Session)
+    const hasHumanHost = messages.some(m => m.sender === 'host');
+
     messages.forEach(msg => {
-        const isHost = msg.sender === 'host';
-        const alignClass = isHost ? 'justify-end' : 'justify-start';
-        const bubbleClass = isHost
+        let isRight = false;
+        if (msg.sender === 'host') isRight = true; // Human always Right
+        else if (msg.sender === 'ai' && !hasHumanHost) isRight = true; // AI is Right only if acting as Host (no Human)
+
+        // Sender Name Display
+        let displayName = msg.sender_name || 'Unknown';
+        if (msg.sender === 'host') displayName = 'Host'; // Force 'Host' for Human
+        if (msg.sender === 'ai') displayName = state.charName; // Force CharName for AI (if missing)
+
+        const alignClass = isRight ? 'justify-end' : 'justify-start';
+        const bubbleStyle = isRight
             ? 'bg-blue-600 text-white rounded-br-none'
             : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-bl-none';
 
         const div = document.createElement('div');
         div.className = `flex ${alignClass}`;
         div.innerHTML = `
-            <div class="flex flex-col ${isHost ? 'items-end' : 'items-start'} max-w-[80%]">
-                <span class="text-xs text-slate-400 mb-1 mx-1">${msg.sender_name || (isHost ? 'Host' : 'Visitor')}</span>
-                <div class="${bubbleClass} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
+            <div class="flex flex-col ${isRight ? 'items-end' : 'items-start'} max-w-[80%]">
+                <span class="text-xs text-slate-400 mb-1 mx-1">${displayName}</span>
+                <div class="${bubbleStyle} px-4 py-2 rounded-2xl shadow-sm text-sm whitespace-pre-wrap leading-relaxed">
                     ${msg.message}
                     ${msg.model ? `<div class="mt-1 text-[10px] opacity-60 font-mono text-right">${msg.model}</div>` : ''}
                 </div>
