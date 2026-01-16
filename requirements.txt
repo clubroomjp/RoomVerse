@@ -8,3 +8,4 @@ deep-translator
 aiohttp
 sqlmodel
 pyinstaller
+python-multipart

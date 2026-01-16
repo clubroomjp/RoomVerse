@@ -379,8 +379,17 @@ function updateTexts(lang) {
         if (texts[key]) el.placeholder = texts[key];
     });
     // Update dynamic elements
-    // Update dynamic elements
     updateRoomStatusUI(state.is_open_cache !== undefined ? state.is_open_cache : true);
+
+    // Update Active Card Badge dynamically
+    const activeCardDisplay = document.getElementById('active-card-display');
+    if (activeCardDisplay && !activeCardDisplay.classList.contains('hidden') && state.config && state.config.character) {
+        // Re-construct text using current lang
+        // active_card_label key check
+        const prefix = texts.active_card_label || (lang === 'ja' ? "使用中のカード: " : "Active Card: ");
+        // Avoid double prefixing if innerText already has name... better to reconstruct from config
+        activeCardDisplay.innerText = prefix + state.config.character.name;
+    }
 }
 
 // --- Config Logic ---
