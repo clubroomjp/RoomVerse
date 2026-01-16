@@ -12,7 +12,8 @@ Each Room acts as a node, powered by a local LLM, and interconnected securely vi
 
 ### 📚 Lorebook (World Info)
 - **Context Injection**: Teach your AI about your world. Defined keywords automatically inject relevant information into the chat context.
-- **Bilingual Support**: Supports both native (e.g., Japanese) and English keywords. Entries are automatically translated to English for better LLM understanding.
+- **Multi-Book Support**: Create and switch between multiple lorebooks. Import standard JSON formats (SillyTavern compatible).
+- **Bilingual Support**: Supports both native (e.g., Japanese) and English keywords. Entries are automatically translates to English for better LLM understanding.
 - **Visitor Learning**: Visitors can teach the AI new words using the `!learn` command or the "Teach" button in the chat interface.
 
 ### 🗣️ Real-time Translation
@@ -59,7 +60,7 @@ Each Room acts as a node, powered by a local LLM, and interconnected securely vi
 2. **Setup**:
     - **LLM**: Point to your local LLM URL. Use "Scan" to auto-detect.
     - **Character**: Set Name, Persona, and System Prompt.
-    - **Lore**: Add world info/keywords in the Lore tab.
+    - **Lore**: Open Lorebook Manager to import or create world info. Set the Active Book for the current session.
 3. **Go Online**:
     - In **Room & Discovery**, check **Auto-Publish to Discovery**.
     - Your room is now visible to others in the Lobby!
