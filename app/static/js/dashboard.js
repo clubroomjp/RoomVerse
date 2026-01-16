@@ -186,9 +186,8 @@ const i18n = {
         help_char_name: "訪問者に表示されるAIの名前",
         help_char_persona: "AIの性格や振る舞いの指示書",
         help_sys_prompt: "根本的な動作ルール",
-        help_trans_enable: "送受信メッセージをリアルタイムで翻訳します",
+        help_trans_enable: "送受信メッセージを英語に変換し、英語モデルと日本語で会話できるようになります",
         help_max_turns: "この回数だけ会話を往復すると相手のAIは帰還します",
-        help_trans_enable: "送受信メッセージをリアルタイムで翻訳します",
         help_api_key: "任意の文字列を設定して、共有したいユーザーにだけ伝えてください",
         help_discovery_url: "基本的には、初期登録のURLをお使いください",
 
