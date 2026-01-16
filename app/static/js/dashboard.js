@@ -1105,7 +1105,8 @@ function openLoreEntryEditor(keyword) {
         loreState.editingEntry = entry;
 
         document.getElementById('lore-edit-keyword').value = entry.keyword;
-        document.getElementById('lore-edit-keyword').disabled = true; // PK cannot change easily
+        document.getElementById('lore-edit-keyword').value = entry.keyword;
+        document.getElementById('lore-edit-keyword').disabled = false; // Enabled for renaming
         document.getElementById('lore-edit-secondary').value = entry.secondary_keys || "";
         document.getElementById('lore-edit-content').value = entry.content;
         document.getElementById('lore-edit-enabled').checked = entry.enabled !== false;
@@ -1134,6 +1135,18 @@ async function saveLoreEntryV2() {
         constant: document.getElementById('lore-edit-constant').checked,
         book: loreState.currentBook
     };
+
+    // Check for Rename (PK change)
+    if (loreState.editingEntry && loreState.editingEntry.keyword !== keyword) {
+        if (confirm(`Renaming entry from '${loreState.editingEntry.keyword}' to '${keyword}'. This will delete the old entry. Continue?`)) {
+            try {
+                // Delete old entry
+                await fetch(`/api/lore/${encodeURIComponent(loreState.editingEntry.keyword)}`, { method: 'DELETE' });
+            } catch (e) { console.error("Failed to delete old entry", e); }
+        } else {
+            return; // Cancel save
+        }
+    }
 
     try {
         const res = await fetch('/api/lore', {
