@@ -48,6 +48,7 @@ class CharacterCard(SQLModel, table=True):
     tags: Optional[str] = None # JSON list or comma separated
     creator: Optional[str] = None
     character_version: Optional[str] = None
+    image_path: Optional[str] = None # Path to avatar image (filename in static/cards/)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
 # --- Database Connection ---

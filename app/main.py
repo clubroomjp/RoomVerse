@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, Query
+from fastapi import FastAPI, HTTPException, Header, Depends, Query, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Annotated
+import shutil
+import os
 from sqlmodel import Session
 from app.core.llm import llm_client
 from app.core.config import config, Config, save_config
@@ -46,6 +48,9 @@ async def announce_presence_task():
 async def lifespan(app: FastAPI):
     global GLOBAL_PUBLIC_URL
     # Startup
+    # Ensure static cards dir exists
+    os.makedirs("app/static/cards", exist_ok=True)
+    
     create_db_and_tables()
     GLOBAL_PUBLIC_URL = start_tunnel(PORT)
     if GLOBAL_PUBLIC_URL:
@@ -513,6 +518,37 @@ async def deactivate_card():
     config.character.active_card_id = None
     save_config(config)
     return {"status": "deactivated"}
+
+@app.post("/api/cards/{card_id}/image")
+async def upload_card_image(card_id: int, file: UploadFile = File(...)):
+    """Upload an avatar image for a card."""
+    with get_session_wrapper() as session:
+        card = session.get(CharacterCard, card_id)
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        
+        # Validate PNG?
+        if file.content_type != "image/png":
+             raise HTTPException(status_code=400, detail="Only PNG images allowed")
+
+        # Save file
+        filename = f"card_{card_id}_{uuid.uuid4().hex[:8]}.png"
+        path = f"app/static/cards/{filename}"
+        
+        # Remove old image if exists
+        if card.image_path:
+             old_path = f"app/static/cards/{card.image_path}"
+             if os.path.exists(old_path):
+                 os.remove(old_path)
+                 
+        with open(path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        card.image_path = filename
+        session.add(card)
+        session.commit()
+        session.refresh(card)
+        return {"status": "uploaded", "image_path": filename}
 
 
 @app.delete("/api/lore/{keyword}")

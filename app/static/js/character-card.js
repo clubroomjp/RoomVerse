@@ -85,6 +85,21 @@
         }
     }
 
+    async function apiUploadImage(cardId, file) {
+        const body = new FormData();
+        body.append('file', file);
+
+        try {
+            const res = await fetch(`/api/cards/${cardId}/image`, {
+                method: 'POST',
+                body: body
+            });
+            return await res.json();
+        } catch (e) {
+            console.error('Upload Error:', e);
+        }
+    }
+
     async function apiDeleteCard(id) {
         await fetch(`/api/cards/${id}`, { method: 'DELETE' });
     }
@@ -168,15 +183,32 @@
                         <i class="fas fa-plus"></i> <span data-i18n="create_add">Add Card</span>
                     </button>
                 </div>
-                ${cards.map(card => `
+                ${cards.map(card => {
+            // Decide Avatar URL
+            const avatarUrl = card.image_path ?
+                `/dashboard/cards/${card.image_path}` :
+                null;
+
+            return `
                     <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 p-4 relative group ${activeId === card.id ? 'ring-2 ring-blue-500' : ''}">
                         ${activeId === card.id ? '<div class="absolute top-2 right-2 text-blue-500"><i class="fas fa-check-circle"></i> Active</div>' : ''}
                         
-                        <h4 class="font-bold text-lg mb-1 truncate">${escape(card.name)}</h4>
-                        <p class="text-xs text-slate-500 mb-3 truncate">v${card.character_version || '1.0'} by ${filterXSS(card.creator || 'Unknown')}</p>
-                        
-                        <div class="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 h-16">
-                            ${filterXSS(card.description || 'No description.')}
+                        <div class="flex gap-4 mb-3">
+                             <!-- Avatar -->
+                             <div class="w-16 h-24 bg-slate-200 dark:bg-slate-700 rounded-lg shrink-0 overflow-hidden flex items-center justify-center">
+                                 ${avatarUrl ?
+                    `<img src="${avatarUrl}" class="w-full h-full object-cover">` :
+                    `<i class="fas fa-user text-slate-400 text-2xl"></i>`
+                }
+                             </div>
+                             
+                             <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-lg mb-1 truncate">${escape(card.name)}</h4>
+                                <p class="text-xs text-slate-500 mb-2 truncate">v${card.character_version || '1.0'} by ${filterXSS(card.creator || 'Unknown')}</p>
+                                <div class="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 h-10">
+                                    ${filterXSS(card.description || 'No description.')}
+                                </div>
+                             </div>
                         </div>
 
                         <div class="flex gap-2 mt-auto">
@@ -201,34 +233,57 @@
                             </button>
                         </div>
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
         `;
     }
 
     function renderEditorHTML() {
         const c = editingCard || { name: '', description: '', personality: '', scenario: '', first_mes: '', mes_example: '', system_prompt: '' };
+        const avatarUrl = (c && c.image_path) ? `/dashboard/cards/${c.image_path}` : null;
+
         return `
             <div class="space-y-4 max-w-4xl mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_name">Name</label>
-                        <input type="text" id="edit-name" value="${escape(c.name)}" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Left: Avatar Upload -->
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Avatar Image</label>
+                        <div class="w-full aspect-[2/3] bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden relative group border-2 border-dashed border-slate-400 dark:border-slate-600 hover:border-blue-500 transition-colors">
+                            <img id="avatar-preview" src="${avatarUrl || ''}" class="w-full h-full object-cover ${avatarUrl ? '' : 'hidden'}">
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none ${avatarUrl ? 'opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity' : ''}">
+                                <div class="text-center text-slate-500 dark:text-slate-300 p-2">
+                                    <i class="fas fa-camera text-2xl mb-1"></i>
+                                    <p class="text-xs">Click to Upload</p>
+                                </div>
+                            </div>
+                            <input type="file" id="edit-avatar" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewAvatar(this)">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 text-center">PNG only. Will verify on Save.</p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_creator">Creator</label>
-                        <input type="text" id="edit-creator" value="${escape(c.creator || '')}" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2">
+
+                    <!-- Right: Fields -->
+                    <div class="md:col-span-2 space-y-4">
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_name">Name</label>
+                                <input type="text" id="edit-name" value="${escape(c.name)}" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2">
+                            </div>
+                             <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_creator">Creator</label>
+                                <input type="text" id="edit-creator" value="${escape(c.creator || '')}" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_description">Description</label>
+                            <textarea id="edit-description" rows="3" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2 font-mono text-sm">${escape(c.description || '')}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_personality">Personality</label>
+                            <textarea id="edit-personality" rows="3" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2 font-mono text-sm">${escape(c.personality || '')}</textarea>
+                        </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_description">Description</label>
-                    <textarea id="edit-description" rows="3" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2 font-mono text-sm">${escape(c.description || '')}</textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="label_personality">Personality</label>
-                    <textarea id="edit-personality" rows="3" class="w-full rounded border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white p-2 font-mono text-sm">${escape(c.personality || '')}</textarea>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,6 +356,18 @@
         renderModal();
     };
 
+    window.previewAvatar = function (input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.getElementById('avatar-preview');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
     window.doSaveCard = async function () {
         const data = {
             id: editingCard ? editingCard.id : undefined,
@@ -316,7 +383,15 @@
 
         if (!data.name) return alert('Name is required');
 
-        await apiSaveCard(data);
+        // 1. Save Data
+        const savedCard = await apiSaveCard(data);
+
+        // 2. Upload Image if present
+        const fileInput = document.getElementById('edit-avatar');
+        if (fileInput && fileInput.files.length > 0) {
+            await apiUploadImage(savedCard.id, fileInput.files[0]);
+        }
+
         activeTab = 'library';
         await loadCards();
         renderModal();
@@ -364,6 +439,29 @@
             }
         };
 
+        // Reuse image if available
+        if (card.image_path) {
+            try {
+                const resp = await fetch(`/dashboard/cards/${card.image_path}`);
+                const blob = await resp.blob();
+                const buffer = await blob.arrayBuffer();
+
+                // Inject chunks into this Custom Image
+                const pngData = new Uint8Array(buffer);
+                const jsonStr = JSON.stringify(cardData);
+                const b64 = btoa(jsonStr);
+
+                const injected = injectTextChunk(pngData, 'chara', b64);
+                const finalBlob = new Blob([injected], { type: 'image/png' });
+                downloadBlob(finalBlob, `${card.name.replace(/[^a-z0-9]/gi, '_')}.png`);
+                return;
+
+            } catch (e) {
+                console.error("Failed to load custom avatar for export, fallback to default", e);
+            }
+        }
+
+        // Fallback: Generate Default
         const pngBlob = await createCharacterCardPNG(cardData, card.name);
         downloadBlob(pngBlob, `${card.name.replace(/[^a-z0-9]/gi, '_')}.png`);
     };
@@ -411,7 +509,12 @@
                 creator_notes: d.creator_notes
             };
 
-            await apiSaveCard(newCard);
+            const saved = await apiSaveCard(newCard);
+
+            // Re-upload the Imported PNG as the Avatar!
+            // We need to send 'file' to apiUploadImage
+            await apiUploadImage(saved.id, file);
+
             alert('Card Imported!');
             activeTab = 'library';
             await loadCards(); // ensure we have the new ID
