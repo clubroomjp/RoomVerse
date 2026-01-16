@@ -68,6 +68,7 @@ const i18n = {
 
         // Detection
         detect_btn: "Scan",
+        scan_btn: "Scan",
         detected_label: "Detected Models",
         detected_placeholder: "Manual Input (Select to auto-fill)",
         scanning: "Scanning...",
@@ -200,6 +201,7 @@ const i18n = {
 
         // Detection
         detect_btn: "スキャン",
+        scan_btn: "スキャン",
         detected_label: "検出されたモデル",
         detected_placeholder: "手動入力 (選択すると自動入力)",
         scanning: "スキャン中...",
@@ -207,12 +209,12 @@ const i18n = {
         no_models: "ローカルモデルが見つかりませんでした",
 
         // Logs
-        tab_logs: "ログ",
-        logs_title: "会話ログ",
-        delete_logs: "全ログ削除",
+        tab_logs: "履歴",
+        logs_title: "会話履歴",
+        delete_logs: "全履歴削除",
         select_session: "セッションを選択して詳細を表示",
-        log_deleted: "全てのログを削除しました。",
-        confirm_delete: "本当に全てのログを削除しますか？この操作は取り消せません。",
+        log_deleted: "全ての履歴を削除しました。",
+        confirm_delete: "本当に全ての履歴を削除しますか？この操作は取り消せません。",
         confirm_delete_session: "このセッション履歴を削除しますか？",
 
         // Password Modal
@@ -287,7 +289,7 @@ function switchTab(tabId) {
     const activeClass = state.theme === 'dark' ? 'bg-slate-700' : 'bg-white shadow';
     const inactiveClass = 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300';
 
-    ['dashboard', 'lobby', 'room', 'logs', 'lore'].forEach(t => {
+    ['dashboard', 'lobby', 'room', 'logs'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if (t === tabId) {
             btn.className = `px-4 py-2 rounded-md text-sm font-bold transition-transform transform scale-105 shadow ${state.theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-white text-slate-800'}`;
