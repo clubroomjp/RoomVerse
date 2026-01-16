@@ -401,8 +401,16 @@ function updateTexts(lang) {
         // Re-construct text using current lang
         // active_card_label key check
         const prefix = texts.active_card_label || (lang === 'ja' ? "使用中のカード: " : "Active Card: ");
-        // Avoid double prefixing if innerText already has name... better to reconstruct from config
-        activeCardDisplay.innerText = prefix + state.config.character.name;
+
+        let text = prefix + state.config.character.name;
+
+        // Append Active Lorebook if available
+        if (state.config.character.active_lorebook) {
+            const bookPrefix = lang === 'ja' ? " | 辞書: " : " | Book: ";
+            text += bookPrefix + state.config.character.active_lorebook;
+        }
+
+        activeCardDisplay.innerText = text;
     }
 }
 
