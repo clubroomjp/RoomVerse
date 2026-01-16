@@ -29,6 +29,7 @@ class RoomConfig(BaseModel):
     max_visitors: int = 5
     discovery_api_url: str | None = None
     auto_announce: bool = False
+    allow_guest_lore_updates: bool = True
 
 class SecurityConfig(BaseModel):
     ngrok_basic_auth: str | None = None

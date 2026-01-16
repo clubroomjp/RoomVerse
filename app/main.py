@@ -795,6 +795,10 @@ async def visit(request: VisitRequest, session: Session = Depends(get_session)):
                 try: cnt_en = translator.translate(cnt, target_lang="en")
                 except: pass
 
+            # Permission Check
+            if not config.room.allow_guest_lore_updates:
+                return VisitResponse(host_name="System", response="Dictionary updates are disabled by the host.")
+
             # Save to DB
             existing = session.get(LoreEntry, kw)
             if existing:
@@ -933,6 +937,10 @@ async def chat(request: ChatRequest, session: Session = Depends(get_session)):
                 except: pass
                 try: cnt_en = translator.translate(cnt, target_lang="en")
                 except: pass
+            
+            # Permission Check
+            if not config.room.allow_guest_lore_updates:
+                 return ChatResponse(session_id=session_id, response="Dictionary updates are disabled by the host.")
             
             existing = session.get(LoreEntry, kw)
             if existing:

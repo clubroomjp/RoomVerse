@@ -26,6 +26,7 @@ const i18n = {
         room_desc: "Description",
         max_visitors: "Max Visitors",
         auto_announce: "Auto-Publish to Discovery",
+        allow_guest_lore: "Allow Guest Dictionary",
         discovery_url: "Discovery API URL",
         active_rooms: "Active Rooms",
         room_status: "Room Status",
@@ -65,6 +66,7 @@ const i18n = {
         help_max_turns: "Agent ends conversation after this many exchanges.",
         help_api_key: "Set an arbitrary string and share it only with users you trust.",
         help_discovery_url: "Basically, please use the registered URL.",
+        help_allow_guest_lore: "If enabled, visitors can teach new words to the dictionary via !learn command.",
 
         // Detection
         detect_btn: "Scan",
@@ -168,6 +170,7 @@ const i18n = {
         room_desc: "紹介文",
         max_visitors: "最大入室数",
         auto_announce: "ロビーに自動公開",
+        allow_guest_lore: "ゲストによる辞書追加を許可",
         discovery_url: "Discovery API URL",
         active_rooms: "公開中のルーム",
         room_status: "ルーム状態",
@@ -205,6 +208,7 @@ const i18n = {
         help_max_turns: "この回数だけ会話を往復すると相手のAIは帰還します",
         help_api_key: "任意の文字列を設定して、共有したいユーザーにだけ伝えてください",
         help_discovery_url: "基本的には、初期登録のURLをお使いください",
+        help_allow_guest_lore: "有効にすると、訪問者が !learn コマンドで辞書に単語を追加できるようになります",
 
         // Detection
         detect_btn: "スキャン",
@@ -693,6 +697,7 @@ async function loadConfig() {
             document.getElementById('room-desc').value = config.room.description || "";
             document.getElementById('room-capacity').value = config.room.max_visitors || 5;
             document.getElementById('auto-announce').checked = config.room.auto_announce || false;
+            document.getElementById('allow-guest-lore').checked = (config.room.allow_guest_lore_updates !== undefined) ? config.room.allow_guest_lore_updates : true;
             document.getElementById('discovery-url').value = config.room.discovery_api_url || "";
 
             document.getElementById('room-display-name').innerText = config.room.name || "My Room";
@@ -730,6 +735,7 @@ async function saveConfig() {
     newConfig.room.description = document.getElementById('room-desc').value;
     newConfig.room.max_visitors = parseInt(document.getElementById('room-capacity').value) || 5;
     newConfig.room.auto_announce = document.getElementById('auto-announce').checked;
+    newConfig.room.allow_guest_lore_updates = document.getElementById('allow-guest-lore').checked;
     newConfig.room.discovery_api_url = document.getElementById('discovery-url').value;
 
     if (!newConfig.agent) newConfig.agent = {};
